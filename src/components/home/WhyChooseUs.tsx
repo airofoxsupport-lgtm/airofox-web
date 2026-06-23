@@ -12,7 +12,7 @@ export default function WhyChooseUs() {
   return (
     <section className="py-20">
       <Container>
-        <SectionHeading title="Why Choose AeroFox?" />
+        <SectionHeading title="Why Choose AiroFox?" />
         <div className="grid md:grid-cols-2 gap-6">
           {points.map((point) => (
             <div key={point} className="p-6 rounded-xl border">

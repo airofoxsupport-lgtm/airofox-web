@@ -1,5 +1,8 @@
 import Container from "../shared/Container";
 import Button from "../shared/Button";
+import Image from "next/image";
+import { FaWhatsapp } from "react-icons/fa";
+import { Phone } from "lucide-react";
 
 export default function HeroSection() {
   return (
@@ -16,13 +19,25 @@ export default function HeroSection() {
             </p>
 
             <div className="flex gap-4 mt-8">
-              <Button>Book Now</Button>
-              <Button variant="outline">WhatsApp</Button>
+              <Button className="gap-2">
+                <Phone size={18} />
+                Book Now
+              </Button>
+
+              <Button variant="whatsapp" className="gap-2">
+                <FaWhatsapp size={18} />
+                WhatsApp
+              </Button>
             </div>
           </div>
 
-          <div className="h-[400px] rounded-3xl bg-brand-navy/10 flex items-center justify-center">
-            Hero Image
+          <div className="relative h-[356px] rounded-3xl bg-brand-navy/10 overflow-hidden">
+            <Image
+              src="/HeroImg.jpg"
+              alt="Hero Image"
+              fill
+              className="object-contain"
+            />
           </div>
         </div>
       </Container>

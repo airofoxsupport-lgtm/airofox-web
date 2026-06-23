@@ -1,7 +1,12 @@
 import Container from "../shared/Container";
 
 export default function TrustStrip() {
-  const stats = ["5000+ Customers", "4.8 Rating", "100+ Experts", "Same Day"];
+  const stats = [
+    "5000+ Customers",
+    "4.8 Rating",
+    "100+ Experts",
+    "24/7 Support",
+  ];
 
   return (
     <section className="py-8 border-y">

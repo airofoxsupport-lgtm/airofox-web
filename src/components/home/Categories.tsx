@@ -2,14 +2,7 @@ import Container from "../shared/Container";
 import SectionHeading from "../shared/SectionHeading";
 
 export default function Categories() {
-  const categories = [
-    "Cleaning",
-    "Repair",
-    "Painting",
-    "Pest Control",
-    "Salon",
-    "Carpentry",
-  ];
+  const categories = ["AC & Appliances Repair", "Electrician", "Plumber"];
 
   return (
     <section className="py-20 bg-gray-50">
@@ -19,7 +12,7 @@ export default function Categories() {
           {categories.map((cat) => (
             <div
               key={cat}
-              className="rounded-2xl bg-white p-8 shadow text-center"
+              className="rounded-2xl bg-brand-navy p-8 shadow text-center text-white"
             >
               {cat}
             </div>

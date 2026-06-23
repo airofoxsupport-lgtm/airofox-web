@@ -5,10 +5,10 @@ import HeroSection from "@/components/home/HeroSection";
 import TrustStrip from "@/components/home/TrustStrip";
 import MostBooked from "@/components/home/MostBooked";
 import Categories from "@/components/home/Categories";
-import WhyChooseUs from "@/components/home/WhyChooseUs";
+// import WhyChooseUs from "@/components/home/WhyChooseUs";
 import HowItWorks from "@/components/home/HowItWorks";
 import Deals from "@/components/home/Deals";
-import Testimonials from "@/components/home/Testimonials";
+// import Testimonials from "@/components/home/Testimonials";
 import ServiceAreas from "@/components/home/ServiceAreas";
 import FAQPreview from "@/components/home/FAQPreview";
 import CTASection from "@/components/shared/CTASection";
@@ -22,10 +22,10 @@ export default function Home() {
         <TrustStrip />
         <MostBooked />
         <Categories />
-        <WhyChooseUs />
+        {/* <WhyChooseUs /> */}
         <HowItWorks />
         <Deals />
-        <Testimonials />
+        {/* <Testimonials /> */}
         <ServiceAreas />
         <FAQPreview />
         <CTASection />

@@ -9,7 +9,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-3">
               <Image src="/logo.jpeg" alt="logo" width={50} height={50} />
-              <h3 className="text-2xl font-bold">AeroFox</h3>
+              <h3 className="text-2xl font-bold">AiroFox</h3>
             </div>
 
             <p className="mt-4 text-gray-300">
@@ -41,14 +41,14 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Contact</h4>
             <ul className="space-y-2 text-gray-300">
               <li>+91 XXXXX XXXXX</li>
-              <li>contact@aerofox.com</li>
+              <li>contact@airofox.com</li>
               <li>Mumbai, India</li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-white/10 mt-10 pt-6 text-center text-gray-400">
-          © 2026 AeroFox. All rights reserved.
+          © 2026 AiroFox. All rights reserved.
         </div>
       </Container>
     </footer>
