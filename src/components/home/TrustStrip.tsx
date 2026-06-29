@@ -2,10 +2,10 @@ import Container from "../shared/Container";
 
 export default function TrustStrip() {
   const stats = [
-    "5000+ Customers",
-    "4.8 Rating",
-    "100+ Experts",
-    "24/7 Support",
+    "Faster Arrival",
+    "Expert Technicians",
+    "Transparent Pricing",
+  
   ];
 
   return (

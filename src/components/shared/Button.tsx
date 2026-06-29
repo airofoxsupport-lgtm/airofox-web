@@ -11,7 +11,7 @@ const buttonVariants = cva(
         secondary: "bg-brand-orange text-white hover:opacity-90 shadow-md",
         outline:
           "border border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white",
-        whatsapp: "bg-green-500 text-white hover:bg-green-600",
+        x: "bg-green-500 text-white hover:bg-green-600",
       },
     },
     defaultVariants: {

@@ -2,9 +2,23 @@ import Image from "next/image";
 import Container from "@/components/shared/Container";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { Zap, ShieldCheck, BadgeIndianRupee } from "lucide-react";
 
 export default function AboutPage() {
-  const features = ["Verified Experts", "Fast Response", "Transparent Pricing"];
+  const features = [
+    {
+      title: "Same Day Service",
+      icon: Zap,
+    },
+    {
+      title: "Verified Experts",
+      icon: ShieldCheck,
+    },
+    {
+      title: "Transparent Pricing",
+      icon: BadgeIndianRupee,
+    },
+  ];
 
   return (
     <>
@@ -72,15 +86,24 @@ export default function AboutPage() {
             </h2>
 
             <div className="grid md:grid-cols-3 gap-6 mt-14">
-              {features.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-3xl bg-brand-navy p-8 text-white text-center shadow-xl border border-white/10"
-                >
-                  <div className="w-14 h-14 mx-auto rounded-full bg-brand-orange mb-5" />
-                  <h3 className="text-2xl font-semibold">{item}</h3>
-                </div>
-              ))}
+              {features.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div
+                    key={item.title}
+                    className="rounded-3xl bg-brand-navy p-8 text-white text-center shadow-xl border border-white/10 hover:-translate-y-2 transition-all duration-300"
+                  >
+                    <div className="w-20 h-20 mx-auto rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6 shadow-inner">
+                      <div className="w-14 h-14 rounded-full bg-brand-orange/15 flex items-center justify-center">
+                        <Icon size={30} className="text-white" />
+                      </div>
+                    </div>
+
+                    <h3 className="text-2xl font-semibold">{item.title}</h3>
+                  </div>
+                );
+              })}
             </div>
           </Container>
         </section>

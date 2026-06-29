@@ -3,13 +3,13 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/shared/Container";
 import Button from "@/components/shared/Button";
-import { Phone } from "lucide-react";
+import { BadgeIndianRupee, Phone, ShieldCheck, Zap } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 
 const services = [
   {
     title: "AC & Appliances Repair",
-    image: "/services/ac.jpg",
+    image: "/services/ac.jpeg",
     desc: "Fast diagnostics and repairs for essential appliances.",
     features: [
       "AC Service",
@@ -43,9 +43,26 @@ const services = [
 ];
 
 export default function ServicesPage() {
+  const features = [
+    {
+      title: "Same Day Service",
+      desc: "Quick service at your doorstep",
+      icon: Zap,
+    },
+    {
+      title: "Verified Experts",
+      desc: "Trusted trained professionals",
+      icon: ShieldCheck,
+    },
+    {
+      title: "Transparent Pricing",
+      desc: "No hidden charges",
+      icon: BadgeIndianRupee,
+    },
+  ];
   const message = encodeURIComponent(
-  "Hi AiroFox, I need help with home services."
-);
+    "Hi AiroFox, I need help with home services.",
+  );
   return (
     <>
       <Header />
@@ -135,18 +152,17 @@ export default function ServicesPage() {
         {/* WHY */}
         <section className="py-24 bg-gray-50">
           <Container>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                "Same Day Service",
-                "Verified Experts",
-                "Transparent Pricing",
-              ].map((item) => (
+            <div className="grid md:grid-cols-3 gap-6 ">
+              {features.map((item) => (
                 <div
-                  key={item}
-                  className="rounded-3xl bg-brand-navy p-8 text-white text-center shadow-xl"
+                  key={item.title}
+                  className="rounded-3xl bg-brand-navy p-8 text-white text-center shadow-xl hover: -translate-y-2 transition-all duration-300"
                 >
-                  <div className="w-14 h-14 rounded-full bg-brand-orange mx-auto mb-4" />
-                  <h3 className="text-2xl font-semibold">{item}</h3>
+                  <div className="  w-20 h-20 mx-auto rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6 shadow-inner">
+                    <item.icon size={30} />
+                  </div>
+                  <h3 className="text-2xl font-semibold">{item.title}</h3>
+                  <p className="text-gray-300 mt-2">{item.desc}</p>
                 </div>
               ))}
             </div>
