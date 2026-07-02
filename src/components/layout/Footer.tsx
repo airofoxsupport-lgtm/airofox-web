@@ -45,7 +45,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link className="hover:text-brand-orange transition" href="/contact">
-                  Contact
+                  Contact Us
                 </Link>
               </li>
             </ul>
