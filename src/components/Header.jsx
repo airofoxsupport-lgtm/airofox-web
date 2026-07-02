@@ -79,7 +79,7 @@ export default function Header() {
           </nav>
 
           {/* Desktop CTA */}
-          <a href="tel:+919326065836" className="hidden md:flex items-center justify-center" style={{ background: '#08244c', color: '#fff', textDecoration: 'none', borderRadius: '10px', padding: '10px 20px', fontWeight: 700, fontSize: '14px', transition: 'background 0.25s' }}
+          <a href="tel:+919326065836" className="hidden md:flex items-center justify-center" style={{ background: '#08244c', color: '#fff', textDecoration: 'none', borderRadius: '10px', padding: '12px 24px', fontWeight: 700, fontSize: '14px', transition: 'background 0.25s' }}
             onMouseEnter={e => e.currentTarget.style.background = '#ff7a00'}
             onMouseLeave={e => e.currentTarget.style.background = '#08244c'}>
             Book Now
@@ -214,7 +214,7 @@ export default function Header() {
           <a
             href="tel:+919326065836"
             style={{
-              flex: 1, padding: '14px 0', borderRadius: '14px',
+              flex: 1, padding: '17px 0', borderRadius: '14px',
               background: '#08244c', color: '#fff', fontWeight: 700, fontSize: '14px',
               textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             }}
@@ -229,7 +229,7 @@ export default function Header() {
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              flex: 1, padding: '14px 0', borderRadius: '14px',
+              flex: 1, padding: '17px 0', borderRadius: '14px',
               background: '#00c758', color: '#fff', fontWeight: 700, fontSize: '14px',
               textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             }}
