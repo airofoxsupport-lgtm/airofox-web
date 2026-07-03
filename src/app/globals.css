@@ -193,7 +193,7 @@
 }
 
 @media (max-width: 767px) {
-  body {
+  body:not(.no-cta-padding) {
     padding-bottom: 80px;
   }
 }
@@ -735,4 +735,13 @@
   border-radius: 50%;
   background: #ff7a00;
   flex-shrink: 0;
+}
+
+/* Scrollbar hiding utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }

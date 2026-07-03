@@ -1,8 +1,17 @@
+"use client";
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
+import { useProtectedAction } from '@/hooks/useProtectedAction';
 
 export default function Footer() {
+  const { handleProtectedAction } = useProtectedAction();
+
+  const pathname = usePathname();
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/worker')) {
+    return null;
+  }
   return (
     <footer className="bg-brand-navy text-white py-16">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -78,7 +87,7 @@ export default function Footer() {
             <h4 className="font-semibold mb-1 text-lg">Contact</h4>
             <ul className="space-y-3 text-gray-300">
               <li>
-                <a href="tel:+919326065836" className="hover:text-brand-orange transition">
+                <a href="tel:+919326065836" onClick={(e) => handleProtectedAction(e, 'call')} className="hover:text-brand-orange transition">
                   +91 9326065836
                 </a>
               </li>
@@ -150,6 +159,7 @@ export default function Footer() {
               {/* WhatsApp */}
               <a
                 href="https://wa.me/919326065836"
+                onClick={(e) => handleProtectedAction(e, 'whatsapp')}
                 aria-label="WhatsApp"
                 target="_blank"
                 rel="noopener noreferrer"

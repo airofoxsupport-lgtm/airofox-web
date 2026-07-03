@@ -1,9 +1,14 @@
+"use client";
+import Link from "next/link";
 import Container from "./Container";
 import Button from "./Button";
 import { FaWhatsapp } from "react-icons/fa";
 import { Phone } from "lucide-react";
+import { useProtectedAction } from '@/hooks/useProtectedAction';
 
 export default function CTASection() {
+  const { handleProtectedAction } = useProtectedAction();
+
   const message = encodeURIComponent(
     "Hi AiroFox, I need help with home services.",
   );
@@ -19,15 +24,16 @@ export default function CTASection() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
             <div className="flex gap-4 mt-8">
-              <a href="tel:+919326065836">
+              <Link href="/book" onClick={(e) => handleProtectedAction(e, 'book')}>
                 <Button className="gap-2 bg-white  text-brand-navy hover:bg-brand-orange hover:text-white">
                   <Phone size={18} />
                   Book Now
                 </Button>
-              </a>
+              </Link>
 
               <a
-                href={`https://wa.me/919326065836?text=${message}`}
+                href="https://wa.me/919326065836"
+                onClick={(e) => handleProtectedAction(e, 'whatsapp', 'home services')}
                 target="_blank"
                 rel="noopener noreferrer"
               >

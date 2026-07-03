@@ -1,10 +1,15 @@
+"use client";
+import Link from "next/link";
 import Container from "../shared/Container";
 import Button from "../shared/Button";
 import Image from "next/image";
 import { FaWhatsapp } from "react-icons/fa";
 import { Phone } from "lucide-react";
+import { useProtectedAction } from '@/hooks/useProtectedAction';
 
 export default function HeroSection() {
+  const { handleProtectedAction } = useProtectedAction();
+
   const message = encodeURIComponent(
     "Hi AiroFox, I need help with home services.",
   );
@@ -22,15 +27,16 @@ export default function HeroSection() {
             </p>
 
             <div className="flex gap-4 mt-8">
-              <a href="tel:+919326065836">
+              <Link href="/book" onClick={(e) => handleProtectedAction(e, 'book')}>
                 <Button className="gap-2">
                   <Phone size={18} />
                   Book Now
                 </Button>
-              </a>
+              </Link>
 
               <a
-                href={`https://wa.me/919326065836?text=${message}`}
+                href="https://wa.me/919326065836"
+                onClick={(e) => handleProtectedAction(e, 'whatsapp', 'home services')}
                 target="_blank"
                 rel="noopener noreferrer"
               >

@@ -6,8 +6,12 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+import { db } from '@/lib/db';
+import { ShieldAlert } from 'lucide-react';
+
 export default function Login() {
   const router = useRouter();
+  const [role, setRole] = useState<'user' | 'worker'>('user');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -40,17 +44,63 @@ export default function Login() {
     setIsSubmitting(true);
     setStatus({ type: '', message: '' });
 
-    // Simulate API call
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsSubmitting(false);
-      setIsSuccess(true);
-      setStatus({ type: 'success', message: 'Welcome back! Redirecting you to the home page...' });
-      
-      // Redirect after animation
-      setTimeout(() => {
-        router.push('/');
-      }, 1500);
-    }, 1500);
+
+      if (role === 'worker') {
+        const worker = await db.getWorkerByEmail(formData.email);
+        if (!worker) {
+          setStatus({
+            type: 'error',
+            message: 'No worker account found with this email. Please register as a partner.',
+          });
+          return;
+        }
+
+        if (worker.status === 'pending') {
+          setStatus({
+            type: 'warning',
+            message: 'Your registration request is pending. It will be sent to the administrator to verify and accept you. Please wait.',
+          });
+          return;
+        }
+
+        if (worker.status === 'rejected') {
+          setStatus({
+            type: 'error',
+            message: 'Your application has been declined. Please contact partner support for details.',
+          });
+          return;
+        }
+
+        // Approved worker login
+        setIsSuccess(true);
+        localStorage.setItem('af_logged_worker', JSON.stringify(worker));
+        setStatus({ type: 'success', message: 'Worker login successful! Redirecting to dashboard...' });
+        
+        setTimeout(() => {
+          router.push('/worker/dashboard');
+        }, 1500);
+      } else {
+        // Customer login
+        const user = await db.getUserByEmail(formData.email);
+        if (!user) {
+          setStatus({
+            type: 'error',
+            message: 'No customer account found with this email. Please register first.',
+          });
+          return;
+        }
+
+        setIsSuccess(true);
+        localStorage.setItem('af_logged_user', JSON.stringify(user));
+        setStatus({ type: 'success', message: 'Welcome back! Redirecting you to the home page...' });
+        
+        setTimeout(() => {
+          router.push('/');
+        }, 1500);
+      }
+    }, 1200);
   };
 
   return (
@@ -86,6 +136,38 @@ export default function Login() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Role Toggle Selector */}
+              <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1 border border-brand-border/40 mb-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRole('user');
+                    setStatus({ type: '', message: '' });
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 cursor-pointer ${
+                    role === 'user'
+                      ? 'bg-white text-brand-navy shadow-sm border border-brand-border/20 font-extrabold'
+                      : 'text-brand-slate hover:text-brand-navy'
+                  }`}
+                >
+                  Customer Account
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRole('worker');
+                    setStatus({ type: '', message: '' });
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 cursor-pointer ${
+                    role === 'worker'
+                      ? 'bg-brand-navy text-white shadow-sm font-extrabold'
+                      : 'text-brand-slate hover:text-brand-navy'
+                  }`}
+                >
+                  Partner / Worker
+                </button>
+              </div>
+
               {/* Email Input */}
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-brand-navy block" htmlFor="email">
@@ -99,7 +181,7 @@ export default function Login() {
                     id="email"
                     type="email"
                     name="email"
-                    placeholder="name@example.com"
+                    placeholder={role === 'worker' ? 'partner@airofox.com' : 'name@example.com'}
                     value={formData.email}
                     onChange={handleInputChange}
                     className="pl-11 h-12 rounded-2xl border border-brand-border bg-white focus-visible:border-brand-orange focus-visible:ring-brand-orange/20"
@@ -165,6 +247,8 @@ export default function Login() {
                   className={`p-3.5 rounded-xl text-xs font-medium border ${
                     status.type === 'success'
                       ? 'bg-green-50 text-green-700 border-green-200'
+                      : status.type === 'warning'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200'
                       : 'bg-red-50 text-red-700 border-red-200'
                   } animate-in fade-in slide-in-from-top-1 duration-200`}
                 >
@@ -216,13 +300,19 @@ export default function Login() {
         </div>
 
         {/* Footer Link */}
-        <div className="text-center mt-6">
+        <div className="text-center mt-6 space-y-4">
           <p className="text-sm text-brand-slate">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/register" className="font-bold text-brand-orange hover:underline transition-all">
               Sign up now
             </Link>
           </p>
+          
+          <div className="border-t border-brand-border/40 pt-4 flex justify-center">
+            <Link href="/admin/login" className="text-xs font-bold text-brand-slate/60 hover:text-brand-orange transition-all flex items-center gap-1.5">
+              <ShieldAlert className="w-3.5 h-3.5" /> Secret Admin Portal
+            </Link>
+          </div>
         </div>
       </div>
     </div>

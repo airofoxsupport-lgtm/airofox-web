@@ -1,10 +1,14 @@
 "use client";
 import React, { useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useProtectedAction } from '@/hooks/useProtectedAction';
+
 
 function ServicesContent() {
   const searchParams = useSearchParams();
   const serviceParam = searchParams.get('service');
+  const { handleProtectedAction } = useProtectedAction();
+
 
   const acRef = useRef<HTMLDivElement>(null);
   const electricianRef = useRef<HTMLDivElement>(null);
@@ -122,6 +126,7 @@ function ServicesContent() {
                   <div className="flex items-center gap-4 mt-10">
                     <a
                       href="tel:+919326065836"
+                      onClick={(e) => handleProtectedAction(e, 'call', service.title)}
                       className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300 gap-2 bg-transparent text-white hover:bg-white/10"
                       style={{ padding: '14px 28px' }}
                     >
@@ -142,7 +147,8 @@ function ServicesContent() {
                       Call Now
                     </a>
                     <a
-                      href={`https://wa.me/919326065836?text=Hi%20AiroFox%2C%20I%20need%20help%20with%20${encodeURIComponent(service.title)}.`}
+                      href="https://wa.me/919326065836"
+                      onClick={(e) => handleProtectedAction(e, 'whatsapp', service.title)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300 bg-green-500 text-white hover:bg-green-600 hover:-translate-y-0.5 shadow-md gap-2"

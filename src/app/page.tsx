@@ -1,9 +1,11 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useProtectedAction } from '@/hooks/useProtectedAction';
+
 
 function useReveal(t = 0.12) {
-  const ref = useRef<any>(null);
+  const ref = useRef<HTMLElement>(null);
   const [v, setV] = useState(false);
   useEffect(() => {
     const o = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setV(true); o.disconnect(); } }, { threshold: t });
@@ -32,6 +34,8 @@ function useCountUp(target: number, dur = 1800, active = false) {
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const toggleFaq = (i: number) => setOpenFaq(openFaq === i ? null : i);
+  const { handleProtectedAction } = useProtectedAction();
+
 
   const [statsRef, statsVis] = useReveal(0.2);
   const [dashRef,  dashVis]  = useReveal(0.08);
@@ -106,6 +110,7 @@ export default function Home() {
               <div className="flex gap-4 mt-6">
                 <a
                   href="tel:+919326065836"
+                  onClick={(e) => handleProtectedAction(e, 'call')}
                   className="inline-flex items-center justify-center rounded-xl text-base font-semibold transition-all duration-300 shadow-md gap-2 bg-brand-navy text-white hover:bg-brand-orange"
                   style={{ padding: '16px 28px' }}
                 >
@@ -126,7 +131,8 @@ export default function Home() {
                   Book Now
                 </a>
                 <a
-                  href="https://wa.me/919326065836?text=Hi%20AiroFox%2C%20I%20need%20help%20with%20home%20services."
+                  href="https://wa.me/919326065836"
+                  onClick={(e) => handleProtectedAction(e, 'whatsapp')}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center rounded-xl text-base font-semibold transition-all duration-300 bg-green-500 text-white hover:bg-green-600 shadow-md gap-2"
@@ -606,6 +612,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
               <a
                 href="tel:+919326065836"
+                onClick={(e) => handleProtectedAction(e, 'call')}
                 className="inline-flex items-center justify-center rounded-xl text-base font-semibold transition-all duration-300 shadow-md gap-2 bg-white text-brand-navy hover:bg-brand-orange hover:text-white sm:min-w-[180px]"
                 style={{ padding: '16px 28px' }}
               >
@@ -626,7 +633,8 @@ export default function Home() {
                 Book Now
               </a>
               <a
-                href="https://wa.me/919326065836?text=Hi%20AiroFox%2C%20I%20need%20help%20with%20home%20services."
+                href="https://wa.me/919326065836"
+                onClick={(e) => handleProtectedAction(e, 'whatsapp')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-xl text-base font-semibold transition-all duration-300 bg-green-500 text-white hover:bg-green-600 shadow-md gap-2 sm:min-w-[180px]"

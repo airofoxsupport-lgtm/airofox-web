@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
+import { useProtectedAction } from '@/hooks/useProtectedAction';
+
 
 const NAV = [
   {
@@ -41,16 +43,37 @@ const NAV = [
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<{name: string, email: string} | null>(null);
   const pathname = usePathname();
+  const { handleProtectedAction } = useProtectedAction();
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('af_logged_user');
+    if (userStr) {
+      try {
+        setUser(JSON.parse(userStr));
+      } catch(e) {}
+    }
+  }, [pathname]);
+
 
   // Close on route change
-  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOpen(false);
+    }
+  }, [pathname, open]);
 
   // Prevent body scroll when drawer open
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [open]);
+
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/worker')) {
+    return null;
+  }
 
   return (
     <>
@@ -83,23 +106,53 @@ export default function Header() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-6">
-            <Link
-              href="/login"
-              style={{
-                fontWeight: 600,
-                fontSize: '15px',
-                textDecoration: 'none',
-                color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : '#334155',
-                transition: 'color 0.2s',
-              }}
-            >
-              Sign In
-            </Link>
-            <a href="tel:+919326065836" className="flex items-center justify-center" style={{ background: '#08244c', color: '#fff', textDecoration: 'none', borderRadius: '10px', padding: '12px 24px', fontWeight: 700, fontSize: '14px', transition: 'background 0.25s' }}
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontWeight: 600, fontSize: '15px', color: '#08244c' }}>
+                  Hi, {user.name}
+                </span>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('af_logged_user');
+                    setUser(null);
+                    window.location.reload();
+                  }}
+                  style={{
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    color: '#ff7a00',
+                    background: 'rgba(255,122,0,0.1)',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,122,0,0.15)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,122,0,0.1)'}
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                style={{
+                  fontWeight: 600,
+                  fontSize: '15px',
+                  textDecoration: 'none',
+                  color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : '#334155',
+                  transition: 'color 0.2s',
+                }}
+              >
+                Sign In
+              </Link>
+            )}
+            <Link href="/book" onClick={(e) => handleProtectedAction(e, 'book')} className="flex items-center justify-center" style={{ background: '#08244c', color: '#fff', textDecoration: 'none', borderRadius: '10px', padding: '12px 24px', fontWeight: 700, fontSize: '14px', transition: 'background 0.25s' }}
               onMouseEnter={e => e.currentTarget.style.background = '#ff7a00'}
               onMouseLeave={e => e.currentTarget.style.background = '#08244c'}>
               Book Now
-            </a>
+            </Link>
           </div>
 
           {/* Hamburger */}
@@ -223,42 +276,79 @@ export default function Header() {
           })}
 
           {/* Mobile Sign In */}
-          <Link
-            href="/login"
-            onClick={() => setOpen(false)}
-            style={{
+          {user ? (
+            <div style={{ 
+              padding: '16px 12px', 
+              marginTop: '8px',
+              background: '#f8fafc',
+              borderRadius: '14px',
+              border: '1px solid #e2e8f0',
               display: 'flex',
               alignItems: 'center',
-              gap: '14px',
-              padding: '14px 12px',
-              borderRadius: '14px',
-              textDecoration: 'none',
-              marginTop: '4px',
-              background: pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.08)' : 'transparent',
-              color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : '#334155',
-              fontWeight: pathname === '/login' || pathname === '/register' ? 700 : 600,
-              fontSize: '15px',
-              transition: 'all 0.18s ease',
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <span style={{
-              width: '40px', height: '40px', borderRadius: '11px', flexShrink: 0,
-              background: pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.12)' : '#f8fafc',
-              color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : '#64748b',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: `1.5px solid ${pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.2)' : '#f1f5f9'}`,
-              transition: 'all 0.18s ease',
+              justifyContent: 'space-between'
             }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
-              </svg>
-            </span>
-            Sign In / Register
-            {(pathname === '/login' || pathname === '/register') && (
-              <span style={{ marginLeft: 'auto', width: '7px', height: '7px', borderRadius: '50%', background: '#ff7a00' }} />
-            )}
-          </Link>
+              <p style={{ fontWeight: 700, fontSize: '15px', color: '#08244c', margin: 0 }}>
+                Hi, {user.name}
+              </p>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('af_logged_user');
+                  setUser(null);
+                  setOpen(false);
+                  window.location.reload();
+                }}
+                style={{
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  color: '#ff7a00',
+                  background: 'rgba(255,122,0,0.1)',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              onClick={() => setOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                padding: '14px 12px',
+                borderRadius: '14px',
+                textDecoration: 'none',
+                marginTop: '4px',
+                background: pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.08)' : 'transparent',
+                color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : '#334155',
+                fontWeight: pathname === '/login' || pathname === '/register' ? 700 : 600,
+                fontSize: '15px',
+                transition: 'all 0.18s ease',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <span style={{
+                width: '40px', height: '40px', borderRadius: '11px', flexShrink: 0,
+                background: pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.12)' : '#f8fafc',
+                color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : '#64748b',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: `1.5px solid ${pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.2)' : '#f1f5f9'}`,
+                transition: 'all 0.18s ease',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+                </svg>
+              </span>
+              Sign In / Register
+              {(pathname === '/login' || pathname === '/register') && (
+                <span style={{ marginLeft: 'auto', width: '7px', height: '7px', borderRadius: '50%', background: '#ff7a00' }} />
+              )}
+            </Link>
+          )}
         </nav>
 
         {/* Divider */}
@@ -266,8 +356,12 @@ export default function Header() {
 
         {/* CTA buttons */}
         <div style={{ display: 'flex', gap: '10px', padding: '12px 20px 20px' }}>
-          <a
-            href="tel:+919326065836"
+          <Link
+            href="/book"
+            onClick={(e) => {
+              setOpen(false);
+              handleProtectedAction(e, 'book');
+            }}
             style={{
               flex: 1, padding: '17px 0', borderRadius: '14px',
               background: '#08244c', color: '#fff', fontWeight: 700, fontSize: '14px',
@@ -278,9 +372,10 @@ export default function Header() {
               <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/>
             </svg>
             Book Now
-          </a>
+          </Link>
           <a
-            href="https://wa.me/919326065836?text=Hi%20AiroFox%2C%20I%20need%20to%20book%20a%20service."
+            href="https://wa.me/919326065836"
+            onClick={(e) => handleProtectedAction(e, 'whatsapp')}
             target="_blank"
             rel="noopener noreferrer"
             style={{

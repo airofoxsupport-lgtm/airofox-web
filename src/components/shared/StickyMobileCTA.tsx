@@ -1,9 +1,18 @@
+"use client";
 import React from 'react';
+import { usePathname } from 'next/navigation';
+import { useProtectedAction } from '@/hooks/useProtectedAction';
 
 export default function StickyMobileCTA() {
+  const pathname = usePathname();
+  const { handleProtectedAction } = useProtectedAction();
+
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/worker')) {
+    return null;
+  }
   return (
     <div className="mobile-bottom-bar md:hidden">
-      <a href="tel:+919326065836" className="cta-btn cta-call">
+      <a href="tel:+919326065836" className="cta-btn cta-call" onClick={(e) => handleProtectedAction(e, 'call')}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="18"
@@ -21,7 +30,8 @@ export default function StickyMobileCTA() {
         Call Us
       </a>
       <a
-        href="https://wa.me/919326065836?text=Hi%20AiroFox%2C%20I%20need%20to%20book%20a%20service."
+        href="https://wa.me/919326065836"
+        onClick={(e) => handleProtectedAction(e, 'whatsapp')}
         target="_blank"
         rel="noopener noreferrer"
         className="cta-btn cta-whatsapp"
