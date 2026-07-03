@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
+import { Bell, Sun, Moon, Check } from 'lucide-react';
+import { db } from '@/lib/db';
 
 
 const NAV = [
@@ -47,6 +49,34 @@ export default function Header() {
   const pathname = usePathname();
   const { handleProtectedAction } = useProtectedAction();
 
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+
+  // Initialize theme
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      setTheme('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      setTheme('light');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (document.documentElement.classList.contains('dark')) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setTheme('light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setTheme('dark');
+    }
+  };
+
   useEffect(() => {
     const userStr = localStorage.getItem('af_logged_user');
     if (userStr) {
@@ -56,6 +86,40 @@ export default function Header() {
     }
   }, [pathname]);
 
+  // Load and poll notifications
+  useEffect(() => {
+    const loadNotifications = async () => {
+      if (user) {
+        const list = await db.getNotifications(user.email);
+        setNotifications(list);
+      } else {
+        setNotifications([]);
+      }
+    };
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 10000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const markAllRead = async () => {
+    if (!user) return;
+    for (const notif of notifications) {
+      if (!notif.read) {
+        await db.markNotificationRead(notif.id);
+      }
+    }
+    const list = await db.getNotifications(user.email);
+    setNotifications(list);
+  };
+
+  const handleMarkOneRead = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await db.markNotificationRead(id);
+    if (user) {
+      const list = await db.getNotifications(user.email);
+      setNotifications(list);
+    }
+  };
 
   // Close on route change
   useEffect(() => {
@@ -79,18 +143,18 @@ export default function Header() {
     <>
       <header style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(255,255,255,0.92)',
+        background: theme === 'dark' ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
-        borderBottom: '1px solid #e8edf3',
-        boxShadow: '0 1px 12px rgba(8,36,76,0.06)',
+        borderBottom: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e8edf3',
+        boxShadow: theme === 'dark' ? '0 1px 12px rgba(0,0,0,0.3)' : '0 1px 12px rgba(8,36,76,0.06)',
       }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 16px', height: '64px', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'space-between' }}>
 
           {/* Logo */}
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <img alt="AiroFox" width="44" height="44" style={{ borderRadius: '10px', objectFit: 'cover' }} src="/logo.jpeg" />
-            <span style={{ fontWeight: 800, fontSize: '18px', color: '#08244c', letterSpacing: '-0.02em' }}>AiroFox</span>
+            <span style={{ fontWeight: 800, fontSize: '18px', color: theme === 'dark' ? '#f8fafc' : '#08244c', letterSpacing: '-0.02em' }}>AiroFox</span>
           </Link>
 
           {/* Desktop nav */}
@@ -98,7 +162,7 @@ export default function Header() {
             {NAV.map(l => (
               <Link key={l.name} href={l.path} style={{
                 fontWeight: 600, fontSize: '15px', textDecoration: 'none',
-                color: pathname === l.path ? '#ff7a00' : '#334155',
+                color: pathname === l.path ? '#ff7a00' : (theme === 'dark' ? '#cbd5e1' : '#334155'),
                 transition: 'color 0.2s',
               }}>{l.name}</Link>
             ))}
@@ -106,9 +170,138 @@ export default function Header() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-6">
+            
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: theme === 'dark' ? '#cbd5e1' : '#334155',
+                padding: '8px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background 0.2s'
+              }}
+              className="hover:bg-slate-100 dark:hover:bg-slate-800"
+              title="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5" />}
+            </button>
+
+            {/* Notification Bell Desktop */}
+            {user && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: theme === 'dark' ? '#cbd5e1' : '#334155',
+                    padding: '8px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'background 0.2s',
+                    position: 'relative'
+                  }}
+                  className="hover:bg-slate-100 dark:hover:bg-slate-800"
+                  title="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  {notifications.some(n => !n.read) && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '4px',
+                      right: '4px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#ff7a00',
+                    }} />
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifDropdown && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '44px',
+                      right: 0,
+                      width: '320px',
+                      background: theme === 'dark' ? '#111b33' : '#ffffff',
+                      border: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0',
+                      borderRadius: '16px',
+                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                      zIndex: 100,
+                      maxHeight: '400px',
+                      overflowY: 'auto',
+                      padding: '12px'
+                    }}
+                    className="no-scrollbar animate-in fade-in slide-in-from-top-2 duration-200"
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>
+                      <span style={{ fontWeight: 800, fontSize: '13px', color: theme === 'dark' ? '#cbd5e1' : '#08244c' }}>Notifications</span>
+                      {notifications.some(n => !n.read) && (
+                        <button
+                          onClick={markAllRead}
+                          style={{ background: 'none', border: 'none', color: '#ff7a00', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                          className="hover:underline"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    {notifications.length === 0 ? (
+                      <p style={{ textAlign: 'center', padding: '24px 0', fontSize: '12px', color: '#94a3b8', margin: 0 }}>
+                        No notifications yet.
+                      </p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {notifications.map(n => (
+                          <div
+                            key={n.id}
+                            style={{
+                              padding: '10px',
+                              borderRadius: '10px',
+                              background: n.read ? 'transparent' : (theme === 'dark' ? 'rgba(255,122,0,0.06)' : 'rgba(255,122,0,0.04)'),
+                              border: theme === 'dark' ? '1px solid #1e293b' : '1px solid #f1f5f9',
+                              position: 'relative'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                              <span style={{ fontWeight: 700, fontSize: '12px', color: theme === 'dark' ? '#f1f5f9' : '#08244c' }}>{n.title}</span>
+                              {!n.read && (
+                                <button
+                                  onClick={(e) => handleMarkOneRead(n.id, e)}
+                                  style={{ background: 'none', border: 'none', padding: '2px', cursor: 'pointer', color: '#94a3b8' }}
+                                  className="hover:text-emerald-500"
+                                  title="Mark as read"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            <p style={{ fontSize: '11px', color: theme === 'dark' ? '#94a3b8' : '#64748b', margin: '4px 0 0 0', lineHeight: 1.4 }}>{n.message}</p>
+                            <span style={{ fontSize: '9px', color: '#94a3b8', display: 'block', marginTop: '6px', textAlign: 'right' }}>{n.date}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontWeight: 600, fontSize: '15px', color: '#08244c' }}>
+                <span style={{ fontWeight: 600, fontSize: '15px', color: theme === 'dark' ? '#cbd5e1' : '#08244c' }}>
                   Hi, {user.name}
                 </span>
                 <button
@@ -141,43 +334,166 @@ export default function Header() {
                   fontWeight: 600,
                   fontSize: '15px',
                   textDecoration: 'none',
-                  color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : '#334155',
+                  color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : (theme === 'dark' ? '#cbd5e1' : '#334155'),
                   transition: 'color 0.2s',
                 }}
               >
                 Sign In
               </Link>
             )}
-            <Link href="/book" onClick={(e) => handleProtectedAction(e, 'book')} className="flex items-center justify-center" style={{ background: '#08244c', color: '#fff', textDecoration: 'none', borderRadius: '10px', padding: '12px 24px', fontWeight: 700, fontSize: '14px', transition: 'background 0.25s' }}
-              onMouseEnter={e => e.currentTarget.style.background = '#ff7a00'}
-              onMouseLeave={e => e.currentTarget.style.background = '#08244c'}>
+            <Link href="/book" onClick={(e) => handleProtectedAction(e, 'book')} className="flex items-center justify-center" style={{ background: theme === 'dark' ? '#ff7a00' : '#08244c', color: '#fff', textDecoration: 'none', borderRadius: '10px', padding: '12px 24px', fontWeight: 700, fontSize: '14px', transition: 'background 0.25s' }}
+              onMouseEnter={e => e.currentTarget.style.background = theme === 'dark' ? '#e06c00' : '#ff7a00'}
+              onMouseLeave={e => e.currentTarget.style.background = theme === 'dark' ? '#ff7a00' : '#08244c'}>
               Book Now
             </Link>
           </div>
 
-          {/* Hamburger */}
-          <button
-            className="md:hidden flex items-center justify-center"
-            onClick={() => setOpen(o => !o)}
-            aria-label="Toggle menu"
-            style={{
-              background: open ? '#f8fafc' : 'transparent',
-              border: '1.5px solid',
-              borderColor: open ? '#e2e8f0' : 'transparent',
-              borderRadius: '10px', padding: '8px',
-              cursor: 'pointer', color: '#08244c',
-              transition: 'all 0.2s',
-            }}>
-            {open ? (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            ) : (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M4 6h16M4 12h16M4 18h16"/>
-              </svg>
+          {/* Mobile Right Controls Container */}
+          <div className="flex md:hidden items-center gap-2">
+            
+            {/* Theme Toggle Mobile */}
+            <button
+              onClick={toggleTheme}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: theme === 'dark' ? '#cbd5e1' : '#334155',
+                padding: '6px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5" />}
+            </button>
+
+            {/* Notification Bell Mobile */}
+            {user && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: theme === 'dark' ? '#cbd5e1' : '#334155',
+                    padding: '6px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative'
+                  }}
+                >
+                  <Bell className="w-5 h-5" />
+                  {notifications.some(n => !n.read) && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '2px',
+                      right: '2px',
+                      width: '7px',
+                      height: '7px',
+                      borderRadius: '50%',
+                      background: '#ff7a00',
+                    }} />
+                  )}
+                </button>
+
+                {/* Notifications Dropdown (Mobile) */}
+                {showNotifDropdown && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '40px',
+                      right: '-40px',
+                      width: '280px',
+                      background: theme === 'dark' ? '#111b33' : '#ffffff',
+                      border: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0',
+                      borderRadius: '16px',
+                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)',
+                      zIndex: 100,
+                      maxHeight: '350px',
+                      overflowY: 'auto',
+                      padding: '12px'
+                    }}
+                    className="no-scrollbar"
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '8px', borderBottom: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0' }}>
+                      <span style={{ fontWeight: 800, fontSize: '12px', color: theme === 'dark' ? '#cbd5e1' : '#08244c' }}>Notifications</span>
+                      {notifications.some(n => !n.read) && (
+                        <button
+                          onClick={markAllRead}
+                          style={{ background: 'none', border: 'none', color: '#ff7a00', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
+                          className="hover:underline"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    {notifications.length === 0 ? (
+                      <p style={{ textAlign: 'center', padding: '16px 0', fontSize: '11px', color: '#94a3b8', margin: 0 }}>
+                        No notifications yet.
+                      </p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {notifications.map(n => (
+                          <div
+                            key={n.id}
+                            style={{
+                              padding: '8px',
+                              borderRadius: '8px',
+                              background: n.read ? 'transparent' : (theme === 'dark' ? 'rgba(255,122,0,0.06)' : 'rgba(255,122,0,0.04)'),
+                              border: theme === 'dark' ? '1px solid #1e293b' : '1px solid #f1f5f9',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                              <span style={{ fontWeight: 700, fontSize: '11px', color: theme === 'dark' ? '#f1f5f9' : '#08244c' }}>{n.title}</span>
+                              {!n.read && (
+                                <button
+                                  onClick={(e) => handleMarkOneRead(n.id, e)}
+                                  style={{ background: 'none', border: 'none', padding: '1px', cursor: 'pointer', color: '#94a3b8' }}
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            <p style={{ fontSize: '10px', color: theme === 'dark' ? '#94a3b8' : '#64748b', margin: '2px 0 0 0', lineHeight: 1.3 }}>{n.message}</p>
+                            <span style={{ fontSize: '8px', color: '#94a3b8', display: 'block', marginTop: '4px', textAlign: 'right' }}>{n.date}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
-          </button>
+
+            {/* Hamburger */}
+            <button
+              className="flex items-center justify-center"
+              onClick={() => setOpen(o => !o)}
+              aria-label="Toggle menu"
+              style={{
+                background: open ? (theme === 'dark' ? '#1e293b' : '#f8fafc') : 'transparent',
+                border: '1.5px solid',
+                borderColor: open ? (theme === 'dark' ? '#334155' : '#e2e8f0') : 'transparent',
+                borderRadius: '10px', padding: '8px',
+                cursor: 'pointer', color: theme === 'dark' ? '#cbd5e1' : '#08244c',
+                transition: 'all 0.2s',
+              }}>
+              {open ? (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              ) : (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -189,7 +505,7 @@ export default function Header() {
         onClick={() => setOpen(false)}
         style={{
           position: 'fixed', inset: 0, zIndex: 48,
-          background: 'rgba(8,36,76,0.45)',
+          background: theme === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(8,36,76,0.45)',
           backdropFilter: 'blur(3px)',
           WebkitBackdropFilter: 'blur(3px)',
           opacity: open ? 1 : 0,
@@ -203,9 +519,9 @@ export default function Header() {
         className="md:hidden"
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 49,
-          background: '#ffffff',
+          background: theme === 'dark' ? '#111b33' : '#ffffff',
           borderRadius: '24px 24px 0 0',
-          boxShadow: '0 -8px 40px rgba(8,36,76,0.18)',
+          boxShadow: theme === 'dark' ? '0 -8px 40px rgba(0,0,0,0.4)' : '0 -8px 40px rgba(8,36,76,0.18)',
           transform: open ? 'translateY(0)' : 'translateY(110%)',
           transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
@@ -213,7 +529,7 @@ export default function Header() {
 
         {/* Drag handle */}
         <div style={{ display: 'flex', justifyItems: 'center', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px' }}>
-          <div style={{ width: '40px', height: '4px', borderRadius: '99px', background: '#e2e8f0' }} />
+          <div style={{ width: '40px', height: '4px', borderRadius: '99px', background: theme === 'dark' ? '#1e293b' : '#e2e8f0' }} />
         </div>
 
         {/* Sheet header */}
@@ -221,11 +537,11 @@ export default function Header() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <img alt="AiroFox" width="38" height="38" style={{ borderRadius: '9px', objectFit: 'cover' }} src="/logo.jpeg" />
             <div>
-              <p style={{ fontWeight: 800, fontSize: '16px', color: '#08244c', margin: 0 }}>AiroFox</p>
+              <p style={{ fontWeight: 800, fontSize: '16px', color: theme === 'dark' ? '#f8fafc' : '#08244c', margin: 0 }}>AiroFox</p>
               <p style={{ fontSize: '11px', color: '#00c758', fontWeight: 600, margin: 0 }}>● Accepting bookings</p>
             </div>
           </div>
-          <button onClick={() => setOpen(false)} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#64748b', display: 'flex' }}>
+          <button onClick={() => setOpen(false)} style={{ background: theme === 'dark' ? '#1e293b' : '#f8fafc', border: theme === 'dark' ? '1px solid #334155' : '1px solid #e2e8f0', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#64748b', display: 'flex' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
@@ -233,7 +549,7 @@ export default function Header() {
         </div>
 
         {/* Divider */}
-        <div style={{ height: '1px', background: '#f1f5f9', margin: '0 20px' }} />
+        <div style={{ height: '1px', background: theme === 'dark' ? '#1e293b' : '#f1f5f9', margin: '0 20px' }} />
 
         {/* Nav links */}
         <nav style={{ padding: '8px 12px' }}>
@@ -251,7 +567,7 @@ export default function Header() {
                   textDecoration: 'none',
                   marginBottom: idx < NAV.length - 1 ? '4px' : 0,
                   background: active ? 'rgba(255,122,0,0.08)' : 'transparent',
-                  color: active ? '#ff7a00' : '#334155',
+                  color: active ? '#ff7a00' : (theme === 'dark' ? '#cbd5e1' : '#334155'),
                   fontWeight: active ? 700 : 600,
                   fontSize: '15px',
                   transition: 'all 0.18s ease',
@@ -259,10 +575,10 @@ export default function Header() {
                 }}>
                 <span style={{
                   width: '40px', height: '40px', borderRadius: '11px', flexShrink: 0,
-                  background: active ? 'rgba(255,122,0,0.12)' : '#f8fafc',
+                  background: active ? 'rgba(255,122,0,0.12)' : (theme === 'dark' ? '#1e293b' : '#f8fafc'),
                   color: active ? '#ff7a00' : '#64748b',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: `1.5px solid ${active ? 'rgba(255,122,0,0.2)' : '#f1f5f9'}`,
+                  border: `1.5px solid ${active ? 'rgba(255,122,0,0.2)' : (theme === 'dark' ? '#334155' : '#f1f5f9')}`,
                   transition: 'all 0.18s ease',
                 }}>
                   {link.icon}
@@ -280,14 +596,14 @@ export default function Header() {
             <div style={{ 
               padding: '16px 12px', 
               marginTop: '8px',
-              background: '#f8fafc',
+              background: theme === 'dark' ? '#1a274c' : '#f8fafc',
               borderRadius: '14px',
-              border: '1px solid #e2e8f0',
+              border: theme === 'dark' ? '1px solid #1e293b' : '1px solid #e2e8f0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between'
             }}>
-              <p style={{ fontWeight: 700, fontSize: '15px', color: '#08244c', margin: 0 }}>
+              <p style={{ fontWeight: 700, fontSize: '15px', color: theme === 'dark' ? '#cbd5e1' : '#08244c', margin: 0 }}>
                 Hi, {user.name}
               </p>
               <button
@@ -324,7 +640,7 @@ export default function Header() {
                 textDecoration: 'none',
                 marginTop: '4px',
                 background: pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.08)' : 'transparent',
-                color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : '#334155',
+                color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : (theme === 'dark' ? '#cbd5e1' : '#334155'),
                 fontWeight: pathname === '/login' || pathname === '/register' ? 700 : 600,
                 fontSize: '15px',
                 transition: 'all 0.18s ease',
@@ -333,10 +649,10 @@ export default function Header() {
             >
               <span style={{
                 width: '40px', height: '40px', borderRadius: '11px', flexShrink: 0,
-                background: pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.12)' : '#f8fafc',
+                background: pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.12)' : (theme === 'dark' ? '#1e293b' : '#f8fafc'),
                 color: pathname === '/login' || pathname === '/register' ? '#ff7a00' : '#64748b',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: `1.5px solid ${pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.2)' : '#f1f5f9'}`,
+                border: `1.5px solid ${pathname === '/login' || pathname === '/register' ? 'rgba(255,122,0,0.2)' : (theme === 'dark' ? '#334155' : '#f1f5f9')}`,
                 transition: 'all 0.18s ease',
               }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -352,7 +668,7 @@ export default function Header() {
         </nav>
 
         {/* Divider */}
-        <div style={{ height: '1px', background: '#f1f5f9', margin: '8px 20px' }} />
+        <div style={{ height: '1px', background: theme === 'dark' ? '#1e293b' : '#f1f5f9', margin: '8px 20px' }} />
 
         {/* CTA buttons */}
         <div style={{ display: 'flex', gap: '10px', padding: '12px 20px 20px' }}>
@@ -364,7 +680,7 @@ export default function Header() {
             }}
             style={{
               flex: 1, padding: '17px 0', borderRadius: '14px',
-              background: '#08244c', color: '#fff', fontWeight: 700, fontSize: '14px',
+              background: theme === 'dark' ? '#ff7a00' : '#08244c', color: '#fff', fontWeight: 700, fontSize: '14px',
               textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             }}
           >

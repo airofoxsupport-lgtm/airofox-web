@@ -32,6 +32,13 @@ export function useProtectedAction() {
           title: 'WhatsApp Inquiry',
           message: `${user.name} (${user.email}) initiated a WhatsApp chat regarding ${serviceName}.`,
         });
+
+        // Log a customer notification too
+        await db.createNotification({
+          user_id: user.email,
+          title: 'WhatsApp Inquiry Initiated',
+          message: `You opened a WhatsApp chat with support for ${serviceName}. We are ready to assist you!`,
+        });
       } catch (err) {
         console.error('Failed to log WhatsApp notification', err);
       }

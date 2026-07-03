@@ -67,6 +67,27 @@ export default function BookingWizard() {
         worker_id: null,
       });
 
+      // 2. Create customer and admin notifications
+      const userStr = localStorage.getItem('af_logged_user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          await db.createNotification({
+            user_id: user.email,
+            title: 'Booking Confirmed',
+            message: `Your booking for ${selectedService.name} on ${date} at ${time} has been placed. We are matching a partner for you.`,
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      await db.createNotification({
+        user_id: 'admin',
+        title: 'New Service Booking',
+        message: `New booking requested by ${customerDetails.name} for ${selectedService.name}.`,
+      });
+
       setIsSubmitting(false);
       setIsSuccess(true);
     }, 1200);

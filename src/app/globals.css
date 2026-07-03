@@ -745,3 +745,148 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* ── Dark Mode Overrides ───────────────────────── */
+.dark body {
+  background-color: #0b0f19;
+  color: #f8fafc;
+}
+
+.dark main {
+  background-color: #070d19;
+}
+
+.dark section {
+  background-color: #0b0f19 !important;
+}
+
+/* Sections that were white/gray in light mode */
+.dark .bg-white, 
+.dark .bg-gray-50, 
+.dark .bg-slate-50\/40, 
+.dark .bg-slate-50\/50, 
+.dark section.bg-white,
+.dark section.bg-gray-50 {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+}
+
+/* Typography variables overrides */
+.dark .text-brand-navy {
+  color: #f8fafc !important;
+}
+
+.dark .text-brand-slate {
+  color: #94a3b8 !important;
+}
+
+.dark .border-brand-border, 
+.dark .border-gray-150, 
+.dark .border-gray-200,
+.dark .border-gray-100 {
+  border-color: #1e293b !important;
+}
+
+/* Dashboard Cards in Dark Mode */
+.dark .dashboard-card {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dark .dashboard-card-title {
+  color: #f8fafc !important;
+}
+
+.dark .dashboard-card-desc {
+  color: #94a3b8 !important;
+}
+
+.dark .dashboard-card-tag {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+
+.dark .dashboard-card-footer {
+  border-top-color: #1e293b;
+}
+
+.dark .dashboard-price {
+  color: #94a3b8 !important;
+}
+
+/* Quick Selector Items */
+.dark .quick-selector-item {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: #1e293b !important;
+}
+
+.dark .quick-selector-text {
+  color: #cbd5e1 !important;
+}
+
+.dark .quick-selector-icon {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Testimonial Cards */
+.dark .testimonial-card {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+}
+
+.dark .testimonial-name {
+  color: #cbd5e1 !important;
+}
+
+.dark .testimonial-text {
+  color: #94a3b8 !important;
+}
+
+/* Ticker Wrap */
+.dark .bg-white.border-y {
+  background: #070d19 !important;
+  border-color: #1e293b !important;
+}
+
+.dark .ticker-item {
+  color: #cbd5e1 !important;
+  border-right-color: #1e293b;
+}
+
+/* Hero Section */
+.dark section.bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, #0b0f19, #070d19) !important;
+}
+
+.dark .hero-badge {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+/* Forms & Inputs */
+.dark input, 
+.dark select, 
+.dark textarea {
+  background-color: #1a2238 !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+.dark label {
+  color: #cbd5e1 !important;
+}
+
+.dark .bg-\[\#f8fafc\], 
+.dark .bg-slate-50 {
+  background-color: #070d19 !important;
+}
+
+/* Mobile Sticky CTA Bar */
+.dark .mobile-bottom-bar {
+  background: rgba(11, 15, 25, 0.85);
+  border-top-color: rgba(30, 41, 59, 0.8);
+}
