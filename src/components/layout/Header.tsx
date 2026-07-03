@@ -504,7 +504,7 @@ export default function Header() {
         className="md:hidden"
         onClick={() => setOpen(false)}
         style={{
-          position: 'fixed', inset: 0, zIndex: 48,
+          position: 'fixed', inset: 0, zIndex: 9998,
           background: theme === 'dark' ? 'rgba(0,0,0,0.6)' : 'rgba(8,36,76,0.45)',
           backdropFilter: 'blur(3px)',
           WebkitBackdropFilter: 'blur(3px)',
@@ -518,12 +518,14 @@ export default function Header() {
       <div
         className="md:hidden"
         style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 49,
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
           background: theme === 'dark' ? '#111b33' : '#ffffff',
           borderRadius: '24px 24px 0 0',
           boxShadow: theme === 'dark' ? '0 -8px 40px rgba(0,0,0,0.4)' : '0 -8px 40px rgba(8,36,76,0.18)',
           transform: open ? 'translateY(0)' : 'translateY(110%)',
-          transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+          visibility: open ? 'visible' : 'hidden',
+          pointerEvents: open ? 'auto' : 'none',
+          transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1), visibility 0.35s',
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
         }}>
 
