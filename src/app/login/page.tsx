@@ -1,12 +1,12 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-import { db } from '@/lib/db';
+import { db, supabase, isSupabaseConfigured } from '@/lib/db';
 import { ShieldAlert } from 'lucide-react';
 
 export default function Login() {
@@ -22,6 +22,71 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  useEffect(() => {
+    if (isSupabaseConfigured && supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          setIsSubmitting(true);
+          try {
+            // Find or register user in local db/Supabase users table
+            let user = await db.getUserByEmail(session.user.email || '');
+            if (!user) {
+              user = await db.registerUser({
+                name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Google User',
+                email: session.user.email || '',
+                phone: session.user.phone || '',
+              });
+            }
+            
+            localStorage.setItem('af_logged_user', JSON.stringify(user));
+            setIsSuccess(true);
+            setStatus({ type: 'success', message: 'Login successful! Redirecting...' });
+            
+            setTimeout(() => {
+              router.push('/');
+            }, 1000);
+          } catch (err: any) {
+            setStatus({ type: 'error', message: 'Failed to sync user profile.' });
+          } finally {
+            setIsSubmitting(false);
+          }
+        }
+      });
+      
+      return () => subscription.unsubscribe();
+    }
+  }, [router]);
+
+  const handleGoogleLogin = async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      setStatus({
+        type: 'error',
+        message: 'Google Sign-In is not configured. Please verify your Supabase keys in .env.local.'
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setStatus({ type: '', message: '' });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/login` : '',
+          queryParams: {
+            prompt: 'select_account'
+          }
+        }
+      });
+      if (error) {
+        setStatus({ type: 'error', message: error.message });
+        setIsSubmitting(false);
+      }
+    } catch (err: any) {
+      setStatus({ type: 'error', message: 'An error occurred during Google Sign-In.' });
+      setIsSubmitting(false);
+    }
+  };
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -100,6 +165,16 @@ export default function Login() {
           setStatus({
             type: 'error',
             message: 'No customer account found with this email. Please register first.',
+          });
+          return;
+        }
+
+        // Validate password if it has been stored (e.g. from registration or password reset)
+        const savedPassword = localStorage.getItem('af_user_password_' + formData.email.toLowerCase().trim());
+        if (savedPassword && savedPassword !== formData.password) {
+          setStatus({
+            type: 'error',
+            message: 'Incorrect password. Please try again.',
           });
           return;
         }
@@ -296,7 +371,8 @@ export default function Login() {
 
               <button
                 type="button"
-                className="w-full flex items-center justify-center gap-2.5 px-4 py-3 border border-brand-border rounded-2xl text-sm font-bold text-brand-navy bg-white hover:bg-brand-white transition-colors duration-200 cursor-pointer shadow-sm hover:shadow-md"
+                onClick={handleGoogleLogin}
+                className="w-full flex items-center justify-center gap-2.5 px-4 py-3 border border-brand-border rounded-2xl text-sm font-bold text-brand-navy bg-white hover:bg-brand-white transition-colors duration-200 cursor-pointer shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
@@ -312,19 +388,13 @@ export default function Login() {
         </div>
 
         {/* Footer Link */}
-        <div className="text-center mt-6 space-y-4">
+        <div className="text-center mt-6">
           <p className="text-sm text-brand-slate">
             Don&apos;t have an account?{' '}
             <Link href="/register" className="font-bold text-brand-orange hover:underline transition-all">
               Sign up now
             </Link>
           </p>
-          
-          <div className="border-t border-brand-border/40 pt-4 flex justify-center">
-            <Link href="/admin/login" className="text-xs font-bold text-brand-slate/60 hover:text-brand-orange transition-all flex items-center gap-1.5">
-              <ShieldAlert className="w-3.5 h-3.5" /> Secret Admin Portal
-            </Link>
-          </div>
         </div>
       </div>
     </div>

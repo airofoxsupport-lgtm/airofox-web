@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
 import { Bell, Sun, Moon, Check } from 'lucide-react';
-import { db } from '@/lib/db';
+import { db, supabase, isSupabaseConfigured } from '@/lib/db';
 
 
 const NAV = [
@@ -48,6 +48,19 @@ export default function Header() {
   const [user, setUser] = useState<{name: string, email: string} | null>(null);
   const pathname = usePathname();
   const { handleProtectedAction } = useProtectedAction();
+
+  const handleLogout = async () => {
+    localStorage.removeItem('af_logged_user');
+    setUser(null);
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.error('Error signing out from Supabase:', e);
+      }
+    }
+    window.location.reload();
+  };
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -304,11 +317,7 @@ export default function Header() {
                   Hi, {user.name}
                 </span>
                 <button
-                  onClick={() => {
-                    localStorage.removeItem('af_logged_user');
-                    setUser(null);
-                    window.location.reload();
-                  }}
+                  onClick={handleLogout}
                   style={{
                     fontWeight: 700,
                     fontSize: '13px',
@@ -608,11 +617,9 @@ export default function Header() {
                 Hi, {user.name}
               </p>
               <button
-                onClick={() => {
-                  localStorage.removeItem('af_logged_user');
-                  setUser(null);
+                onClick={async () => {
                   setOpen(false);
-                  window.location.reload();
+                  await handleLogout();
                 }}
                 style={{
                   fontWeight: 700,

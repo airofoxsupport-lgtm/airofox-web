@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle, User, Phone, Image as ImageIcon, Briefcase, Award, Globe, Landmark, ShieldCheck, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -35,6 +35,137 @@ export default function Register() {
     password: '',
     confirmPassword: '',
   });
+
+  // OTP states (for user registration only)
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [otpValues, setOtpValues] = useState<string[]>(Array(6).fill(''));
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [resendTimer, setResendTimer] = useState(0);
+  const [otpStatus, setOtpStatus] = useState({ type: '', message: '' });
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleVerifyEmailClick = async () => {
+    if (!userFormData.email) {
+      setStatus({ type: 'error', message: 'Please enter your email address first.' });
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userFormData.email)) {
+      setStatus({ type: 'error', message: 'Please enter a valid email address.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatus({ type: '', message: '' });
+    setOtpStatus({ type: '', message: '' });
+    
+    try {
+      // Check if user already exists
+      const existingUser = await db.getUserByEmail(userFormData.email);
+      if (existingUser) {
+        setStatus({ type: 'error', message: 'An account with this email already exists. Please login.' });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // If not, send OTP
+      const res = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userFormData.email, name: userFormData.name || 'Customer', type: 'register' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setGeneratedOtp(data.otp);
+        setShowOtpVerification(true);
+        setResendTimer(60);
+        setOtpStatus({
+          type: 'success',
+          message: data.devMode 
+            ? 'Verification code generated! (Dev mode: check code below)' 
+            : 'Verification code sent to your email. Please check your inbox.'
+        });
+      } else {
+        setStatus({ type: 'error', message: data.error || 'Failed to send verification code.' });
+      }
+    } catch (err: any) {
+      setStatus({ type: 'error', message: 'Failed to verify email availability.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (/[^0-9]/.test(value)) return; // Allow numbers only
+    
+    const newOtpValues = [...otpValues];
+    newOtpValues[index] = value;
+    setOtpValues(newOtpValues);
+
+    // Auto-focus next input
+    if (value !== '' && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && otpValues[index] === '' && index > 0) {
+      // Focus previous input on backspace if current is empty
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').trim();
+    if (!/^\d{6}$/.test(pastedData)) return; // Check if it's 6 digits
+
+    const newOtpValues = pastedData.split('');
+    setOtpValues(newOtpValues);
+    
+    // Focus last input
+    otpInputRefs.current[5]?.focus();
+  };
+
+  const sendRegisterOtp = async (emailAddress: string, name: string) => {
+    setIsSubmitting(true);
+    setStatus({ type: '', message: '' });
+    setOtpStatus({ type: '', message: '' });
+    try {
+      const res = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailAddress, name, type: 'register' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setGeneratedOtp(data.otp);
+        setShowOtpVerification(true);
+        setResendTimer(60);
+        setOtpStatus({
+          type: 'success',
+          message: data.devMode 
+            ? 'Verification code generated! (Dev mode: check code below)' 
+            : 'Verification code sent to your email. Please check your inbox.'
+        });
+      } else {
+        setStatus({ type: 'error', message: data.error || 'Failed to send verification code.' });
+      }
+    } catch (err: any) {
+      setStatus({ type: 'error', message: 'An error occurred while sending the verification code.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Worker form data & steps
   const [workerStep, setWorkerStep] = useState(1);
@@ -179,33 +310,59 @@ export default function Register() {
     return true;
   };
 
-  const handleUserSubmit = (e: React.FormEvent) => {
+  const handleUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateUserForm()) return;
+
+    if (!isEmailVerified) {
+      setStatus({ type: 'error', message: 'Please verify your email address via OTP first.' });
+      return;
+    }
 
     setIsSubmitting(true);
     setStatus({ type: '', message: '' });
 
-    setTimeout(async () => {
+    try {
+      await db.registerUser({
+        name: userFormData.name,
+        email: userFormData.email,
+        phone: userFormData.phone,
+      });
+
+      // Save user password in local storage so it can be checked in login
+      localStorage.setItem('af_user_password_' + userFormData.email.toLowerCase(), userFormData.password);
+
+      setIsSuccess(true);
+      setStatus({ type: 'success', message: 'Account created successfully! Welcome to AiroFox.' });
+      
+      setTimeout(() => {
+        router.push('/login');
+      }, 1500);
+    } catch (err: unknown) {
+      setStatus({ type: 'error', message: err instanceof Error ? err.message : 'Registration failed.' });
       setIsSubmitting(false);
+    }
+  };
 
-      try {
-        await db.registerUser({
-          name: userFormData.name,
-          email: userFormData.email,
-          phone: userFormData.phone,
-        });
+  const handleOtpSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const enteredOtp = otpValues.join('');
+    if (enteredOtp.length !== 6) {
+      setOtpStatus({ type: 'error', message: 'Please enter all 6 digits of the OTP code.' });
+      return;
+    }
 
-        setIsSuccess(true);
-        setStatus({ type: 'success', message: 'Account created successfully! Welcome to AiroFox.' });
-        
-        setTimeout(() => {
-          router.push('/login');
-        }, 1500);
-      } catch (err: unknown) {
-        setStatus({ type: 'error', message: err instanceof Error ? err.message : 'Registration failed.' });
-      }
-    }, 1500);
+    if (enteredOtp !== generatedOtp) {
+      setOtpStatus({ type: 'error', message: 'Incorrect verification code. Please check your email or resend code.' });
+      return;
+    }
+
+    // OTP is correct! Mark email as verified
+    setIsEmailVerified(true);
+    setShowOtpVerification(false);
+    setOtpValues(Array(6).fill(''));
+    setStatus({ type: 'success', message: 'Email address verified successfully!' });
+    setOtpStatus({ type: '', message: '' });
   };
 
   const handleWorkerSubmit = (e: React.FormEvent) => {
@@ -285,7 +442,7 @@ export default function Register() {
           ) : (
             <div>
               {/* Role Toggle Selector */}
-              {workerStep === 1 && (
+              {workerStep === 1 && !showOtpVerification && (
                 <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1 border border-brand-border/40 mb-6">
                   <button
                     type="button"
@@ -329,15 +486,125 @@ export default function Register() {
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-brand-navy block" htmlFor="email">Email Address</label>
-                    <div className="relative">
-                      <span className="absolute inset-y-0 left-4 flex items-center text-gray-400"><Mail className="w-4 h-4" /></span>
-                      <Input
-                        id="email" type="email" name="email" placeholder="name@example.com"
-                        value={userFormData.email} onChange={handleUserInputChange}
-                        className="pl-11 h-12 rounded-2xl border border-brand-border bg-white focus-visible:border-brand-orange focus-visible:ring-brand-orange/20" required
-                      />
+                    <div className="flex gap-2">
+                      <div className="relative flex-grow">
+                        <span className="absolute inset-y-0 left-4 flex items-center text-gray-400"><Mail className="w-4 h-4" /></span>
+                        <Input
+                          id="email" type="email" name="email" placeholder="name@example.com"
+                          value={userFormData.email} onChange={(e) => {
+                            handleUserInputChange(e);
+                            setIsEmailVerified(false);
+                            setShowOtpVerification(false);
+                          }}
+                          className="pl-11 h-12 rounded-2xl border border-brand-border bg-white focus-visible:border-brand-orange focus-visible:ring-brand-orange/20" required
+                          disabled={isEmailVerified}
+                        />
+                      </div>
+                      {isEmailVerified ? (
+                        <div className="flex items-center gap-1.5 px-4 h-12 rounded-2xl border border-green-200 bg-green-50 text-green-700 text-sm font-bold shadow-sm whitespace-nowrap">
+                          <CheckCircle className="w-4 h-4 text-green-600 animate-[count-pop_0.5s_ease-out]" /> Verified
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleVerifyEmailClick}
+                          disabled={isSubmitting || !userFormData.email}
+                          className="px-5 h-12 rounded-2xl bg-brand-navy hover:bg-brand-orange text-white font-bold text-sm transition-all duration-300 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[80px]"
+                        >
+                          {isSubmitting && !showOtpVerification ? (
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            'Verify'
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
+
+                  {showOtpVerification && (
+                    <div className="p-5 border border-brand-orange/20 bg-brand-orange/5 rounded-2xl space-y-4 animate-in slide-in-from-top-2 duration-300">
+                      <div className="text-center">
+                        <p className="text-xs font-semibold text-brand-navy">
+                          Enter the 6-digit code sent to <span className="font-bold">{userFormData.email}</span>
+                        </p>
+                      </div>
+                      
+                      {/* 6 Digit Inputs */}
+                      <div className="flex justify-between gap-1.5 max-w-xs mx-auto py-1">
+                        {otpValues.map((digit, idx) => (
+                          <input
+                            key={idx}
+                            ref={(el) => { otpInputRefs.current[idx] = el; }}
+                            type="text"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleOtpChange(idx, e.target.value)}
+                            onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                            onPaste={idx === 0 ? handleOtpPaste : undefined}
+                            className="w-10 h-12 text-center text-lg font-bold rounded-xl border border-brand-border bg-white focus:outline-none focus:border-brand-orange focus:ring-4 focus:ring-brand-orange/10 transition-all"
+                            required
+                          />
+                        ))}
+                      </div>
+
+                      {otpStatus.message && (
+                        <div className={`p-3 rounded-xl text-xs font-medium border ${
+                          otpStatus.type === 'success'
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : 'bg-red-50 text-red-700 border-red-200'
+                        } text-center animate-in fade-in`}>
+                          {otpStatus.message}
+                        </div>
+                      )}
+
+                      {/* Dev mode debug banner */}
+                      {generatedOtp && (
+                        <div className="bg-brand-navy/5 border border-brand-navy/15 rounded-xl p-2.5 text-center text-xs font-semibold text-brand-navy">
+                          🔒 Dev Mode Code: <span className="font-extrabold text-brand-orange text-sm select-all tracking-wider">{generatedOtp}</span>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleOtpSubmit()}
+                          disabled={isSubmitting}
+                          className="flex-1 h-11 rounded-xl bg-brand-navy hover:bg-brand-orange text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center cursor-pointer"
+                        >
+                          {isSubmitting ? (
+                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            'Confirm OTP'
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowOtpVerification(false);
+                            setOtpStatus({ type: '', message: '' });
+                            setOtpValues(Array(6).fill(''));
+                          }}
+                          className="px-4 h-11 rounded-xl border border-brand-border bg-white hover:bg-brand-white text-brand-slate font-bold text-xs transition-all cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+
+                      <div className="text-center text-xs font-bold text-brand-slate">
+                        {resendTimer > 0 ? (
+                          <span>Resend code in {resendTimer}s</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => sendRegisterOtp(userFormData.email, userFormData.name)}
+                            className="text-brand-orange hover:underline cursor-pointer"
+                          >
+                            Resend OTP
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-brand-navy block" htmlFor="phone">Phone Number</label>
@@ -394,7 +661,11 @@ export default function Register() {
                   </div>
 
                   {status.message && (
-                    <div className="p-3.5 rounded-xl text-xs font-medium border bg-red-50 text-red-700 border-red-200 animate-in fade-in slide-in-from-top-1">
+                    <div className={`p-3.5 rounded-xl text-xs font-medium border ${
+                      status.type === 'success' 
+                        ? 'bg-green-50 text-green-700 border-green-200' 
+                        : 'bg-red-50 text-red-700 border-red-200'
+                    } animate-in fade-in slide-in-from-top-1`}>
                       {status.message}
                     </div>
                   )}
