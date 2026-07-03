@@ -92,8 +92,8 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="mailto:contact@airofox.com" className="hover:text-brand-orange transition">
-                  contact@airofox.com
+                <a href="mailto:airofoxsupport@gmail.com" className="hover:text-brand-orange transition">
+                  airofoxsupport@gmail.com
                 </a>
               </li>
               <li>Mumbai, India</li>

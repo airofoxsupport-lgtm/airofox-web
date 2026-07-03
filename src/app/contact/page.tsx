@@ -112,7 +112,7 @@ export default function Contact() {
             </a>
 
             {/* Email */}
-            <a href="mailto:support@airofox.com" className="block group">
+            <a href="mailto:airofoxsupport@gmail.com" className="block group">
               <div className="rounded-3xl bg-brand-navy p-8 text-white shadow-xl text-center hover:-translate-y-1 transition-all duration-300 border border-white/5">
                 <div className="w-16 h-16 rounded-full bg-brand-orange mx-auto flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
                   <svg
@@ -132,7 +132,7 @@ export default function Contact() {
                   </svg>
                 </div>
                 <h3 className="text-2xl font-semibold">Email Us</h3>
-                <p className="mt-3 text-gray-300 font-medium">support@airofox.com</p>
+                <p className="mt-3 text-gray-300 font-medium">airofoxsupport@gmail.com</p>
               </div>
             </a>
           </div>
