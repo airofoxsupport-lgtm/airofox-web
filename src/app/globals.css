@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark, .dark *));
 
 @layer base {
   body {
@@ -95,7 +95,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
+html.dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -742,151 +742,207 @@
   display: none;
 }
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* ── Dark Mode Overrides ───────────────────────── */
-.dark body {
-  background-color: #0b0f19;
-  color: #f8fafc;
+/* ══════════════════════════════════════════════════
+   AiroFox DESIGN TOKENS – light / dark
+   ══════════════════════════════════════════════════ */
+:root {
+  --af-bg:        #f8fafc;
+  --af-surface:   #ffffff;
+  --af-surface-2: #f1f5f9;
+  --af-card:      #ffffff;
+  --af-text:      #08244c;
+  --af-subtext:   #475569;
+  --af-muted:     #94a3b8;
+  --af-border:    #e2e8f0;
+  --af-input-bg:  #ffffff;
+  --af-ticker-bg: #ffffff;
+  --af-hero-from: #ffffff;
+  --af-hero-to:   #fff7f0;
 }
 
-.dark main {
-  background-color: #070d19;
+/* When .dark is on <html> all tokens flip */
+html.dark {
+  --af-bg:        #070d19;
+  --af-surface:   #0f172a;
+  --af-surface-2: #111b33;
+  --af-card:      #111b33;
+  --af-text:      #f1f5f9;
+  --af-subtext:   #94a3b8;
+  --af-muted:     #64748b;
+  --af-border:    #1e293b;
+  --af-input-bg:  #1a2238;
+  --af-ticker-bg: #070d19;
+  --af-hero-from: #070d19;
+  --af-hero-to:   #0b0f19;
 }
 
-.dark section {
-  background-color: #0b0f19 !important;
+/* ── Base layer: page background & text ─────────── */
+html.dark body {
+  background-color: var(--af-bg);
+  color: var(--af-text);
 }
 
-/* Sections that were white/gray in light mode */
-.dark .bg-white, 
-.dark .bg-gray-50, 
-.dark .bg-slate-50\/40, 
-.dark .bg-slate-50\/50, 
-.dark section.bg-white,
-.dark section.bg-gray-50 {
-  background-color: #0f172a !important;
-  border-color: #1e293b !important;
+/* ── Sections ───────────────────────────────────── */
+/*
+   Only neutrally-coloured sections get a dark bg.
+   Deliberately do NOT touch py-* sections with bg-brand-orange, bg-brand-navy, etc.
+*/
+html.dark .bg-white,
+html.dark .bg-gray-50 {
+  background-color: var(--af-surface) !important;
 }
 
-/* Typography variables overrides */
-.dark .text-brand-navy {
-  color: #f8fafc !important;
+html.dark .border-brand-border,
+html.dark .border-gray-100,
+html.dark .border-gray-200 {
+  border-color: var(--af-border) !important;
 }
 
-.dark .text-brand-slate {
-  color: #94a3b8 !important;
+/* ── Typography ─────────────────────────────────── */
+html.dark .text-brand-navy {
+  color: var(--af-text) !important;
+}
+html.dark .text-brand-slate,
+html.dark .text-gray-600,
+html.dark .text-gray-500 {
+  color: var(--af-subtext) !important;
+}
+html.dark p,
+html.dark span:not([class*="bg-"]):not([class*="text-brand-orange"]):not([class*="text-white"]) {
+  color: inherit;
 }
 
-.dark .border-brand-border, 
-.dark .border-gray-150, 
-.dark .border-gray-200,
-.dark .border-gray-100 {
-  border-color: #1e293b !important;
+/* ── Hero gradient ──────────────────────────────── */
+html.dark .bg-gradient-to-b.from-white {
+  background-image: linear-gradient(to bottom, var(--af-hero-from), var(--af-hero-to)) !important;
 }
 
-/* Dashboard Cards in Dark Mode */
-.dark .dashboard-card {
-  background: #0f172a !important;
-  border-color: #1e293b !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+/* ── Ticker bar ─────────────────────────────────── */
+html.dark .ticker-wrap {
+  background-color: var(--af-ticker-bg);
+}
+html.dark .ticker-item {
+  color: var(--af-subtext);
+  border-right-color: var(--af-border);
 }
 
-.dark .dashboard-card-title {
-  color: #f8fafc !important;
+/* ── Hero badge ─────────────────────────────────── */
+html.dark .hero-badge {
+  background: var(--af-surface-2);
+  border-color: var(--af-border);
+  color: var(--af-subtext);
 }
 
-.dark .dashboard-card-desc {
-  color: #94a3b8 !important;
+/* ── Service / Dashboard cards ──────────────────── */
+html.dark .dashboard-card {
+  background: var(--af-card) !important;
+  border-color: var(--af-border) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+html.dark .dashboard-card-title {
+  color: var(--af-text) !important;
+}
+html.dark .dashboard-card-desc {
+  color: var(--af-subtext) !important;
+}
+html.dark .dashboard-card-tag {
+  background: var(--af-surface-2) !important;
+  color: var(--af-subtext) !important;
+  border-color: var(--af-border) !important;
+}
+html.dark .dashboard-card-footer {
+  border-top-color: var(--af-border);
+}
+html.dark .dashboard-price {
+  color: var(--af-subtext) !important;
+}
+html.dark .dashboard-icon-wrapper {
+  background: rgba(255,255,255,0.04) !important;
+  color: var(--af-text) !important;
 }
 
-.dark .dashboard-card-tag {
-  background: #1e293b !important;
-  color: #cbd5e1 !important;
-  border-color: #334155 !important;
+/* ── Quick selector ─────────────────────────────── */
+html.dark .quick-selector-item {
+  background: var(--af-surface-2) !important;
+  border-color: var(--af-border) !important;
 }
-
-.dark .dashboard-card-footer {
-  border-top-color: #1e293b;
+html.dark .quick-selector-text {
+  color: var(--af-text) !important;
 }
-
-.dark .dashboard-price {
-  color: #94a3b8 !important;
-}
-
-/* Quick Selector Items */
-.dark .quick-selector-item {
-  background: rgba(15, 23, 42, 0.8) !important;
-  border-color: #1e293b !important;
-}
-
-.dark .quick-selector-text {
-  color: #cbd5e1 !important;
-}
-
-.dark .quick-selector-icon {
+html.dark .quick-selector-icon {
   background: rgba(255, 255, 255, 0.05) !important;
-  color: #cbd5e1 !important;
+  color: var(--af-subtext) !important;
 }
 
-/* Testimonial Cards */
-.dark .testimonial-card {
-  background: #0f172a !important;
-  border-color: #1e293b !important;
+/* ── Testimonial cards ──────────────────────────── */
+html.dark .testimonial-card {
+  background: var(--af-card) !important;
+  border-color: var(--af-border) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+html.dark .testimonial-name {
+  color: var(--af-text) !important;
+}
+html.dark .testimonial-text {
+  color: var(--af-subtext) !important;
+}
+html.dark .testimonial-area {
+  color: var(--af-muted) !important;
 }
 
-.dark .testimonial-name {
-  color: #cbd5e1 !important;
+/* ── How It Works steps (mobile) ───────────────── */
+html.dark .md\:hidden .rounded-2xl {
+  background: var(--af-card) !important;
+  border-color: var(--af-border) !important;
+  color: var(--af-text) !important;
 }
 
-.dark .testimonial-text {
-  color: #94a3b8 !important;
+/* ── FAQ section ────────────────────────────────── */
+html.dark .border.rounded-2xl.bg-white {
+  background: var(--af-card) !important;
+  border-color: var(--af-border) !important;
+}
+html.dark .text-brand-navy.font-semibold {
+  color: var(--af-text) !important;
 }
 
-/* Ticker Wrap */
-.dark .bg-white.border-y {
-  background: #070d19 !important;
-  border-color: #1e293b !important;
+/* ── Forms, inputs ──────────────────────────────── */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: var(--af-input-bg) !important;
+  color: var(--af-text) !important;
+  border-color: var(--af-border) !important;
+}
+html.dark label {
+  color: var(--af-subtext) !important;
 }
 
-.dark .ticker-item {
-  color: #cbd5e1 !important;
-  border-right-color: #1e293b;
+/* ── Booking wizard / card backgrounds ──────────── */
+html.dark .bg-\[\#f8fafc\],
+html.dark [style*="background: #f8fafc"],
+html.dark [style*="background-color: #f8fafc"],
+html.dark [style*="background: rgb(248"] {
+  background-color: var(--af-bg) !important;
+}
+html.dark .rounded-3xl.bg-white,
+html.dark .rounded-2xl.bg-white,
+html.dark .rounded-xl.bg-white {
+  background: var(--af-card) !important;
+  border-color: var(--af-border) !important;
 }
 
-/* Hero Section */
-.dark section.bg-gradient-to-b {
-  background-image: linear-gradient(to bottom, #0b0f19, #070d19) !important;
+/* Step circles in booking page */
+html.dark .bg-brand-navy.text-white {
+  background: var(--af-surface-2) !important;
 }
 
-.dark .hero-badge {
-  background: rgba(15, 23, 42, 0.8) !important;
-  border-color: #1e293b !important;
-  color: #cbd5e1 !important;
-}
-
-/* Forms & Inputs */
-.dark input, 
-.dark select, 
-.dark textarea {
-  background-color: #1a2238 !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-.dark label {
-  color: #cbd5e1 !important;
-}
-
-.dark .bg-\[\#f8fafc\], 
-.dark .bg-slate-50 {
-  background-color: #070d19 !important;
-}
-
-/* Mobile Sticky CTA Bar */
-.dark .mobile-bottom-bar {
-  background: rgba(11, 15, 25, 0.85);
-  border-top-color: rgba(30, 41, 59, 0.8);
+/* ── Mobile Sticky CTA bar ──────────────────────── */
+html.dark .mobile-bottom-bar {
+  background: rgba(7, 13, 25, 0.92);
+  border-top-color: var(--af-border);
 }
