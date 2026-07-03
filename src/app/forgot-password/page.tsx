@@ -105,9 +105,7 @@ export default function ForgotPassword() {
         setResendTimer(60);
         setStatus({
           type: 'success',
-          message: data.devMode 
-            ? 'Verification code generated! (Dev mode: check code below)' 
-            : 'Verification code sent to your email. Please check your inbox.'
+          message: 'Verification code sent to your email. Please check your inbox.'
         });
       } else {
         setStatus({ type: 'error', message: data.error || 'Failed to send verification code.' });
@@ -307,12 +305,7 @@ export default function ForgotPassword() {
                       </div>
                     )}
 
-                    {/* Dev mode code snippet */}
-                    {generatedOtp && (
-                      <div className="bg-brand-navy/5 border border-brand-navy/15 rounded-xl p-3 text-center text-xs font-semibold text-brand-navy">
-                        🔒 Dev Mode Code: <span className="font-extrabold text-brand-orange text-sm select-all tracking-wider">{generatedOtp}</span>
-                      </div>
-                    )}
+
 
                     <Button
                       type="submit"
