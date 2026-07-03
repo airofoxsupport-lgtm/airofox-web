@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/db';
+import { showToast } from '@/components/shared/Toast';
 
 export function useProtectedAction() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export function useProtectedAction() {
     
     if (!userStr) {
       e.preventDefault();
+      showToast('info', 'Sign in required', 'Please log in to continue booking with AiroFox.');
       router.push('/login');
       return;
     }
@@ -43,6 +45,7 @@ export function useProtectedAction() {
         console.error('Failed to log WhatsApp notification', err);
       }
 
+      showToast('success', '💬 Opening WhatsApp', `Connecting you with AiroFox support for ${serviceName}.`);
       window.open(url, '_blank');
     }
     // For 'call' and 'book', if user is logged in, let the default action proceed.

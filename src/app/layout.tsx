@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import StickyMobileCTA from "@/components/shared/StickyMobileCTA";
+import ToastProvider from "@/components/shared/Toast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
         <Header />
         {children}
         <StickyMobileCTA />
+        <ToastProvider />
         <Footer />
       </body>
     </html>

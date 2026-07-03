@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, MapPin, Calendar, Clock, ArrowRight, ArrowLeft, PenTool, Wind, Droplets, Zap } from 'lucide-react';
 import { db } from '@/lib/db';
+import { showToast } from '@/components/shared/Toast';
 
 const SERVICES = [
   { id: 'ac_repair', name: 'AC Repair & Service', icon: <Wind className="w-6 h-6" />, basePrice: 499 },
@@ -90,6 +91,7 @@ export default function BookingWizard() {
 
       setIsSubmitting(false);
       setIsSuccess(true);
+      showToast('success', '🎉 Booking Confirmed!', `Your ${selectedService.name} is booked for ${date} at ${time}.`);
     }, 1200);
   };
 
