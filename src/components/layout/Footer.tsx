@@ -101,7 +101,9 @@ export default function Footer() {
             <div className="flex gap-4 mt-4">
               {/* Instagram */}
               <a
-                href="#"
+                href="https://instagram.com/airofox.official"
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="Instagram"
                 className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-brand-orange transition"
               >
