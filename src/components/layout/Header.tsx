@@ -124,10 +124,9 @@ export default function Header() {
   // Close on route change
   useEffect(() => {
     if (open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpen(false);
     }
-  }, [pathname, open]);
+  }, [pathname]);
 
   // Prevent body scroll when drawer open
   useEffect(() => {
@@ -142,7 +141,7 @@ export default function Header() {
   return (
     <>
       <header style={{
-        position: 'sticky', top: 0, zIndex: 50,
+        position: 'sticky', top: 0, zIndex: 9999,
         background: theme === 'dark' ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
