@@ -413,7 +413,8 @@ function ServicesContent() {
                       ))}
                     </div>
                   </div>
-                ))})()}
+                ));
+              })()}
               </div>
             </div>
 

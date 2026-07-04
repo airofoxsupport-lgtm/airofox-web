@@ -15,6 +15,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "AiroFox - Fast & Reliable Home Services",
   description: "Fast & Reliable Home Services",
+  icons: {
+    icon: '/logo.jpeg',
+    apple: '/logo.jpeg',
+  }
 };
 
 export default function RootLayout({
