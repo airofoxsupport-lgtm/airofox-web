@@ -1,28 +1,38 @@
 "use client";
-import React, { useEffect, useRef, Suspense } from 'react';
+import React, { useEffect, useRef, Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
-
+import { detailedServices } from '@/lib/servicesPricing';
 
 function ServicesContent() {
   const searchParams = useSearchParams();
   const serviceParam = searchParams.get('service');
   const { handleProtectedAction } = useProtectedAction();
+  const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
+  const [modalSearchQuery, setModalSearchQuery] = useState('');
+
+  const closeModal = () => {
+    setSelectedCategory(null);
+    setModalSearchQuery('');
+  };
 
 
   const acRef = useRef<HTMLDivElement>(null);
   const electricianRef = useRef<HTMLDivElement>(null);
   const plumberRef = useRef<HTMLDivElement>(null);
+  const tvRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (serviceParam) {
       let targetRef: React.RefObject<HTMLDivElement | null> | null = null;
       if (serviceParam === 'ac-repair' || serviceParam === 'ac') {
         targetRef = acRef;
-      } else if (serviceParam === 'electrician') {
+      } else if (serviceParam === 'electrician' || serviceParam === 'electrical') {
         targetRef = electricianRef;
-      } else if (serviceParam === 'plumber') {
+      } else if (serviceParam === 'plumber' || serviceParam === 'plumbing') {
         targetRef = plumberRef;
+      } else if (serviceParam === 'general-repairs') {
+        targetRef = tvRef;
       }
 
       if (targetRef && targetRef.current) {
@@ -33,32 +43,34 @@ function ServicesContent() {
     }
   }, [serviceParam]);
 
-  const servicesData = [
-    {
-      id: 'ac-repair',
-      ref: acRef,
-      title: 'AC & Appliances Repair',
-      desc: 'Fast diagnostics and repairs for essential appliances.',
-      img: '/services/ac.jpeg',
-      tags: ['AC Service', 'Gas Refill', 'Refrigerator Repair', 'Washing Machine'],
-    },
-    {
-      id: 'electrician',
-      ref: electricianRef,
-      title: 'Electrician',
-      desc: 'Safe and professional electrical solutions.',
-      img: '/services/electrician.jpg',
-      tags: ['Wiring', 'Switchboard Repair', 'Fan Installation', 'Inverter Setup'],
-    },
-    {
-      id: 'plumber',
-      ref: plumberRef,
-      title: 'Plumber',
-      desc: 'From minor leaks to major plumbing fixes.',
-      img: '/services/plumber.jpg',
-      tags: ['Leak Repair', 'Pipe Fitting', 'Tap Replacement', 'Bathroom Plumbing'],
-    }
-  ];
+  const servicesData = detailedServices.map(cat => {
+    // Determine which ref to use based on id
+    let ref = null;
+    if (cat.id === 'ac') ref = acRef;
+    if (cat.id === 'electrical') ref = electricianRef;
+    if (cat.id === 'plumbing') ref = plumberRef;
+    if (cat.id === 'general-repairs') ref = tvRef;
+
+    // Default descriptions if none exist
+    let desc = `Professional and reliable ${cat.category.toLowerCase()} at your doorstep.`;
+    if (cat.id === 'ac') desc = 'Fast diagnostics and repairs for all types of ACs.';
+    if (cat.id === 'electrical') desc = 'Safe and professional electrical solutions.';
+    if (cat.id === 'plumbing') desc = 'From minor leaks to major plumbing fixes.';
+    if (cat.id === 'general-repairs') desc = 'Expert TV mounting and uninstallation services.';
+    
+    // Extract tags from subcategories
+    const tags = cat.subcategories.slice(0, 4).map(sub => sub.name);
+
+    return {
+      id: cat.id,
+      ref,
+      title: cat.category,
+      desc,
+      img: cat.image?.default?.src || cat.image?.src || cat.image || '/services/ac.jpeg',
+      tags,
+      rawCategory: cat,
+    };
+  });
 
   return (
     <div className="flex-grow">
@@ -76,6 +88,39 @@ function ServicesContent() {
           </p>
         </div>
       </section>
+
+      {/* Sticky Quick Nav */}
+      <div className="sticky top-[64px] z-40 bg-white/80 dark:bg-brand-navy/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 py-3 md:py-4 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+          <div className="flex items-center gap-3 md:gap-4 overflow-x-auto no-scrollbar pb-1">
+            {servicesData.map((service) => {
+              let icon = '🔧';
+              if (service.id === 'ac') icon = '❄️';
+              if (service.id === 'plumbing') icon = '🚰';
+              if (service.id === 'electrical') icon = '⚡';
+              if (service.id === 'general-repairs') icon = '📺';
+
+              return (
+                <button
+                  key={service.id}
+                  onClick={() => {
+                    if (service.ref && service.ref.current) {
+                      const yOffset = -140; // Offset for header + sticky nav
+                      const element = service.ref.current;
+                      const y = element.getBoundingClientRect().top + window.scrollY + yOffset;
+                      window.scrollTo({ top: y, behavior: 'smooth' });
+                    }
+                  }}
+                  className="whitespace-nowrap inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-brand-orange hover:text-white dark:hover:bg-brand-orange text-brand-navy dark:text-slate-200 font-semibold text-sm transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:border-brand-orange dark:hover:border-brand-orange"
+                >
+                  <span>{icon}</span>
+                  {service.title}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* Services List Grid */}
       <section className="py-24 bg-white">
@@ -115,7 +160,9 @@ function ServicesContent() {
                     {service.tags.map((tag) => (
                       <div
                         key={tag}
-                        className="px-4 py-3 rounded-xl bg-white/10 text-sm md:text-base font-medium text-white hover:bg-brand-orange transition-all duration-300 cursor-default"
+                        role="button"
+                        onClick={() => setSelectedCategory(service.rawCategory)}
+                        className="px-4 py-3 rounded-xl bg-white/10 text-sm md:text-base font-medium text-white hover:bg-brand-orange transition-all duration-300 text-left cursor-pointer"
                       >
                         {tag}
                       </div>
@@ -123,7 +170,15 @@ function ServicesContent() {
                   </div>
 
                   {/* CTA Buttons */}
-                  <div className="flex items-center gap-4 mt-10">
+                  <div className="flex items-center gap-4 mt-10 flex-wrap">
+                    <div
+                      role="button"
+                      onClick={() => setSelectedCategory(service.rawCategory)}
+                      className="inline-flex items-center justify-center rounded-xl text-sm font-bold transition-all duration-300 bg-white/10 text-white hover:bg-brand-orange shadow-md gap-2 cursor-pointer"
+                      style={{ padding: '14px 28px' }}
+                    >
+                      View Pricing
+                    </div>
                     <a
                       href="tel:+919326065836"
                       onClick={(e) => handleProtectedAction(e, 'call', service.title)}
@@ -254,6 +309,126 @@ function ServicesContent() {
           </div>
         </div>
       </section>
+
+      {/* Pricing Modal */}
+      {selectedCategory && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-brand-navy/60 backdrop-blur-sm transition-opacity"
+            onClick={closeModal}
+          ></div>
+          
+          {/* Modal Content */}
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-6 md:p-8 border-b border-brand-border">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-black text-brand-navy">
+                    {selectedCategory.category} Pricing
+                  </h2>
+                  <p className="text-brand-slate mt-1">Detailed breakdown of services and variants.</p>
+                </div>
+                <button 
+                  onClick={closeModal}
+                  className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+
+              {/* Modal Search */}
+              <div className="relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input
+                  type="text"
+                  placeholder={`Search in ${selectedCategory.category}...`}
+                  value={modalSearchQuery}
+                  onChange={(e) => setModalSearchQuery(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-brand-orange outline-none transition-all placeholder:text-slate-400 text-brand-navy"
+                />
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 md:p-8 overflow-y-auto bg-slate-50 flex-grow">
+              <div className="space-y-10">
+                {(() => {
+                  let filtered = selectedCategory.subcategories;
+                  if (modalSearchQuery.trim()) {
+                    const q = modalSearchQuery.toLowerCase();
+                    filtered = selectedCategory.subcategories.map((sub: any) => {
+                      if (sub.name.toLowerCase().includes(q)) return sub;
+                      const matchingServices = sub.services.map((srv: any) => {
+                        if (srv.name.toLowerCase().includes(q)) return srv;
+                        const matchingVariants = srv.variants.filter((v: any) => v.name.toLowerCase().includes(q));
+                        if (matchingVariants.length > 0) return { ...srv, variants: matchingVariants };
+                        return null;
+                      }).filter(Boolean);
+                      if (matchingServices.length > 0) return { ...sub, services: matchingServices };
+                      return null;
+                    }).filter(Boolean);
+                  }
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="text-center py-12">
+                        <p className="text-brand-slate text-lg">No services found matching "{modalSearchQuery}"</p>
+                      </div>
+                    );
+                  }
+
+                  return filtered.map((sub: any, subIdx: number) => (
+                  <div key={subIdx} className="bg-white rounded-2xl p-6 shadow-sm border border-brand-border">
+                    <h3 className="text-xl font-bold text-brand-orange mb-6 flex items-center gap-2">
+                      <span className="w-2 h-6 bg-brand-orange rounded-full"></span>
+                      {sub.name}
+                    </h3>
+                    
+                    <div className="space-y-8">
+                      {sub.services.map((srv: any, srvIdx: number) => (
+                        <div key={srvIdx} className="overflow-hidden rounded-xl border border-slate-200">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-brand-navy text-white">
+                                <th className="p-4 font-semibold text-sm md:text-base w-3/4">{srv.name}</th>
+                                <th className="p-4 font-semibold text-sm md:text-base text-right">Price (₹)</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {srv.variants.map((variant: any, varIdx: number) => (
+                                <tr key={varIdx} className="hover:bg-slate-50 transition-colors">
+                                  <td className="p-4 text-brand-navy font-medium text-sm md:text-base">
+                                    {variant.name}
+                                  </td>
+                                  <td className="p-4 text-brand-slate font-bold text-right">
+                                    ₹{variant.price}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))})()}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-brand-border bg-white flex justify-end">
+              <button
+                onClick={closeModal}
+                className="px-6 py-3 bg-brand-navy text-white rounded-xl font-bold hover:bg-brand-navy/90 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

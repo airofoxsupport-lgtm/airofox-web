@@ -2,12 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, LogOut, Search, UserCheck, UserX, Clock, ClipboardList, TrendingUp, Users, CheckCircle, XCircle, FileText, ArrowLeft, RefreshCw } from 'lucide-react';
+import { ShieldCheck, LogOut, Search, UserCheck, UserX, Clock, ClipboardList, TrendingUp, Users, CheckCircle, XCircle, FileText, ArrowLeft, RefreshCw, Sun, Moon } from 'lucide-react';
 import { db, WorkerProfile, Job, AppNotification } from '@/lib/db';
 import { Bell } from 'lucide-react';
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [authorized, setAuthorized] = useState(false);
   const [workers, setWorkers] = useState<WorkerProfile[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -20,6 +21,24 @@ export default function AdminDashboard() {
     setWorkers(await db.getWorkers());
     setJobs(await db.getJobs());
     setNotifications(await db.getNotifications('admin'));
+  };
+
+  // Sync local theme state on mount
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setTheme(isDark ? 'dark' : 'light');
+  }, []);
+
+  const toggleTheme = () => {
+    if (document.documentElement.classList.contains('dark')) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setTheme('light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setTheme('dark');
+    }
   };
 
   // Load and check auth
@@ -130,12 +149,23 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-brand-slate hover:text-brand-orange hover:bg-slate-50 transition-all cursor-pointer border border-transparent hover:border-slate-100"
-          >
-            <LogOut className="w-4 h-4" /> Sign Out
-          </button>
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 hover:bg-slate-100 rounded-xl text-brand-slate hover:text-brand-navy transition-all"
+              title="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="w-4.5 h-4.5 text-yellow-500" /> : <Moon className="w-4.5 h-4.5" />}
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-brand-slate hover:text-brand-orange hover:bg-slate-50 transition-all cursor-pointer border border-transparent hover:border-slate-100"
+            >
+              <LogOut className="w-4 h-4" /> Sign Out
+            </button>
+          </div>
         </div>
       </header>
 

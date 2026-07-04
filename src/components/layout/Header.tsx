@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
-import { Bell, Sun, Moon, Check } from 'lucide-react';
+import { Bell, Sun, Moon, Check, Search } from 'lucide-react';
 import { db, supabase, isSupabaseConfigured } from '@/lib/db';
+import { detailedServices } from '@/lib/servicesPricing';
 
 
 const NAV = [
@@ -141,6 +142,44 @@ export default function Header() {
     }
   }, [pathname]);
 
+  // Search Logic
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+
+  useEffect(() => {
+    if (searchQuery.trim().length > 1) {
+      const query = searchQuery.toLowerCase();
+      const results: any[] = [];
+      detailedServices.forEach(cat => {
+        if (cat.category.toLowerCase().includes(query)) {
+          results.push({ type: 'Category', name: cat.category, catId: cat.id });
+        }
+        cat.subcategories.forEach(sub => {
+          if (sub.name.toLowerCase().includes(query)) {
+            results.push({ type: 'Subcategory', name: sub.name, catId: cat.id });
+          }
+          sub.services.forEach(srv => {
+            if (srv.name.toLowerCase().includes(query)) {
+              results.push({ type: 'Service', name: srv.name, catId: cat.id });
+            }
+            srv.variants.forEach(v => {
+              if (v.name.toLowerCase().includes(query)) {
+                results.push({ type: 'Service', name: v.name, catId: cat.id });
+              }
+            });
+          });
+        });
+      });
+      // Deduplicate by name and take top 6
+      const unique = Array.from(new Set(results.map(r => r.name))).map(name => results.find(r => r.name === name)).slice(0, 6);
+      setSearchResults(unique);
+      setShowSearchDropdown(true);
+    } else {
+      setShowSearchDropdown(false);
+    }
+  }, [searchQuery]);
+
   // Prevent body scroll when drawer open
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -170,7 +209,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6 xl:gap-8">
             {NAV.map(l => (
               <Link key={l.name} href={l.path} style={{
                 fontWeight: 600, fontSize: '15px', textDecoration: 'none',
@@ -179,6 +218,48 @@ export default function Header() {
               }}>{l.name}</Link>
             ))}
           </nav>
+
+          {/* Desktop Search Bar */}
+          <div className="hidden lg:flex relative items-center ml-4 flex-grow max-w-xs xl:max-w-md">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search services (e.g. AC Repair)..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => { if (searchQuery.length > 1) setShowSearchDropdown(true) }}
+                onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-full text-sm font-medium focus:ring-2 focus:ring-brand-orange outline-none dark:text-white transition-all placeholder:text-slate-400"
+              />
+            </div>
+            
+            {/* Search Dropdown */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div 
+                className="absolute top-12 left-0 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+              >
+                <div className="p-2">
+                  {searchResults.map((res, idx) => (
+                    <Link 
+                      key={idx} 
+                      href={`/services?service=${res.catId}`}
+                      onClick={() => {
+                        setShowSearchDropdown(false);
+                        setSearchQuery('');
+                      }}
+                      className="block px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-brand-navy dark:text-slate-200">{res.name}</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">{res.type}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-6">
@@ -600,6 +681,46 @@ export default function Header() {
               </Link>
             );
           })}
+
+          {/* Mobile Search Bar */}
+          <div className="mt-4 mb-2 px-2 relative">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search services..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => { if (searchQuery.length > 1) setShowSearchDropdown(true) }}
+                onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
+                className="w-full pl-10 pr-4 py-3 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-brand-orange outline-none dark:text-white transition-all placeholder:text-slate-400"
+              />
+            </div>
+            
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div className="absolute top-14 left-2 right-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                <div className="p-2">
+                  {searchResults.map((res, idx) => (
+                    <Link 
+                      key={idx} 
+                      href={`/services?service=${res.catId}`}
+                      onClick={() => {
+                        setShowSearchDropdown(false);
+                        setSearchQuery('');
+                        setOpen(false);
+                      }}
+                      className="block px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-brand-navy dark:text-slate-200">{res.name}</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">{res.type}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Mobile Sign In */}
           {user ? (

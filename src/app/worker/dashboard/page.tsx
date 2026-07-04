@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import { 
   User, Power, DollarSign, Briefcase, Award, Star, Bell, Calendar, History, MessageSquare, 
   MapPin, Phone, Navigation, Check, X, ShieldCheck, ArrowRight, Wallet, TrendingUp, Sparkles,
-  Lock, Edit3, Globe, Plus, Trash2, CalendarDays, ExternalLink, RefreshCw, Menu
+  Lock, Edit3, Globe, Plus, Trash2, CalendarDays, ExternalLink, RefreshCw, Menu,
+  Sun, Moon
 } from 'lucide-react';
 import { db, WorkerProfile, Job, Review, AppNotification } from '@/lib/db';
 
@@ -12,6 +13,7 @@ export default function WorkerDashboard() {
   const router = useRouter();
   
   // State
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [worker, setWorker] = useState<WorkerProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'requests' | 'active' | 'earnings' | 'history' | 'schedule' | 'profile' | 'reviews' | 'notifications'>('home');
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -33,6 +35,24 @@ export default function WorkerDashboard() {
     setJobs(await db.getJobsByWorker(id));
     setReviews(await db.getReviews(id));
     setNotifications(await db.getNotifications(id));
+  };
+
+  // Sync local theme state on mount
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setTheme(isDark ? 'dark' : 'light');
+  }, []);
+
+  const toggleTheme = () => {
+    if (document.documentElement.classList.contains('dark')) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setTheme('light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setTheme('dark');
+    }
   };
 
   // Load state and authenticate
@@ -283,6 +303,15 @@ export default function WorkerDashboard() {
               }`}
             >
               {worker.online ? 'Go Offline' : 'Go Online'}
+            </button>
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 hover:bg-slate-100 rounded-xl text-brand-navy transition-all"
+              title="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5" />}
             </button>
 
             {/* Notifications Shortcut */}
