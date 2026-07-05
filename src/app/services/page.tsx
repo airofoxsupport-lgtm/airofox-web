@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
 import { detailedServices } from '@/lib/servicesPricing';
 import { getPricingImage } from '@/lib/pricingImages';
+import ImageUploadModal from '@/components/ImageUploadModal';
 
 function ServicesContent() {
   const searchParams = useSearchParams();
@@ -12,10 +13,30 @@ function ServicesContent() {
   const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
   const [modalSearchQuery, setModalSearchQuery] = useState('');
   const [enlargedImage, setEnlargedImage] = useState<{ src: string; title: string } | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [aiSubcategoryFilter, setAiSubcategoryFilter] = useState<string | null>(null);
+  const [aiResultBanner, setAiResultBanner] = useState<{ object: string; variant: string | null } | null>(null);
 
   const closeModal = () => {
     setSelectedCategory(null);
     setModalSearchQuery('');
+    setAiSubcategoryFilter(null);
+    setAiResultBanner(null);
+  };
+
+  const handleUploadResult = (subcategoryHint: string | null, result: any) => {
+    setShowUploadModal(false);
+    setAiSubcategoryFilter(subcategoryHint);
+    setAiResultBanner(result.service ? { object: result.service, variant: result.variant } : null);
+    
+    // Automatically filter the table to show ONLY the identified object/variant
+    if (result.variant) {
+      setModalSearchQuery(result.variant);
+    } else if (result.service) {
+      setModalSearchQuery(result.service);
+    } else {
+      setModalSearchQuery('');
+    }
   };
 
 
@@ -99,6 +120,7 @@ function ServicesContent() {
               return (
                 <button
                   key={service.id}
+                  suppressHydrationWarning
                   onClick={() => {
                     if (service.ref && service.ref.current) {
                       const yOffset = -140; // Offset for header + sticky nav
@@ -318,7 +340,7 @@ function ServicesContent() {
           <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="p-6 md:p-8 border-b border-brand-border">
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="text-2xl md:text-3xl font-black text-brand-navy">
                     {selectedCategory.category} Pricing
@@ -332,6 +354,42 @@ function ServicesContent() {
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
               </div>
+
+              {/* AI Upload Button */}
+              {selectedCategory.id !== 'ac' && (
+                <button
+                  onClick={() => { setShowUploadModal(true); setAiSubcategoryFilter(null); setAiResultBanner(null); }}
+                  className="w-full mb-4 flex items-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-brand-orange/10 to-orange-100 border-2 border-brand-orange/30 hover:border-brand-orange hover:from-brand-orange/20 hover:to-orange-200 transition-all duration-200 group"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-brand-orange/15 flex items-center justify-center flex-shrink-0 group-hover:bg-brand-orange/25 transition-colors">
+                    <span className="text-lg">📷</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-bold text-brand-navy">Upload Image — Let AI find your service</p>
+                    <p className="text-xs text-brand-slate">Take a photo of your appliance or fixture</p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto text-brand-orange flex-shrink-0"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              )}
+
+              {/* AI Result Banner */}
+              {aiResultBanner && (
+                <div className="mb-4 flex items-center gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-xl">
+                  <span className="text-base">✅</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-green-800 truncate">
+                      Identified: {aiResultBanner.object}{aiResultBanner.variant ? ` — ${aiResultBanner.variant}` : ''}
+                    </p>
+                    {aiSubcategoryFilter && (
+                      <p className="text-xs text-green-700">Showing services for: <span className="font-semibold">{aiSubcategoryFilter}</span></p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { setAiSubcategoryFilter(null); setAiResultBanner(null); setModalSearchQuery(''); }}
+                    className="text-xs text-green-700 hover:text-green-900 underline underline-offset-1 whitespace-nowrap"
+                  >Clear</button>
+                </div>
+              )}
 
               {/* Modal Search */}
               <div className="relative">
@@ -351,9 +409,19 @@ function ServicesContent() {
               <div className="space-y-10">
                 {(() => {
                   let filtered = selectedCategory.subcategories;
+
+                  // Step 1: If AI identified a subcategory, narrow to it first
+                  if (aiSubcategoryFilter) {
+                    const aiFiltered = selectedCategory.subcategories.filter((sub: any) =>
+                      sub.name.toLowerCase() === aiSubcategoryFilter.toLowerCase()
+                    );
+                    if (aiFiltered.length > 0) filtered = aiFiltered;
+                  }
+
+                  // Step 2: If there's a search query, further filter within
                   if (modalSearchQuery.trim()) {
                     const q = modalSearchQuery.toLowerCase();
-                    filtered = selectedCategory.subcategories.map((sub: any) => {
+                    filtered = filtered.map((sub: any) => {
                       if (sub.name.toLowerCase().includes(q)) return sub;
                       const matchingServices = sub.services.map((srv: any) => {
                         if (srv.name.toLowerCase().includes(q)) return srv;
@@ -448,6 +516,17 @@ function ServicesContent() {
           </div>
         </div>
       )}
+
+      {/* AI Image Upload Modal */}
+      {showUploadModal && selectedCategory && (
+        <ImageUploadModal
+          categoryId={selectedCategory.id}
+          categoryName={selectedCategory.category}
+          onClose={() => setShowUploadModal(false)}
+          onResult={handleUploadResult}
+        />
+      )}
+
       {/* Enlarged Image Lightbox */}
       {enlargedImage && (
         <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 bg-brand-navy/80 backdrop-blur-md transition-all">
