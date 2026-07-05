@@ -554,6 +554,7 @@ export default function Home() {
                       tabIndex={0}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') toggleFaq(idx); }}
                       className="group relative flex flex-1 items-center justify-between w-full py-5 text-left font-semibold text-brand-navy hover:text-brand-orange text-base md:text-lg transition-colors outline-none cursor-pointer"
+                      suppressHydrationWarning
                     >
                       <span>{item.q}</span>
                       {isOpen ? (

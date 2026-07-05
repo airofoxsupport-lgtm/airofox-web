@@ -479,36 +479,4 @@ export const detailedServices: ServiceCategory[] = [
       },
     ],
   },
-  {
-    id: 'general-repairs',
-    category: 'TV Installation & Uninstallation',
-    icon: 'Tv',
-    image: require('../../public/tv installatrion.jpeg'),
-    subcategories: [
-      {
-        name: 'TV Services',
-        services: [
-          {
-            name: 'TV Installation',
-            variants: [
-              { name: 'Up to 26"', price: 349 },
-              { name: '32–43"', price: 549 },
-              { name: '46–55"', price: 699 },
-              { name: '56–65"', price: 849 },
-              { name: 'Over 75"', price: 1849 },
-            ],
-          },
-          {
-            name: 'TV Uninstallation',
-            variants: [
-              { name: 'Below 46"', price: 229 },
-              { name: '46–55"', price: 279 },
-              { name: '56–65"', price: 549 },
-              { name: 'Over 75"', price: 749 },
-            ],
-          },
-        ],
-      },
-    ],
-  },
 ];

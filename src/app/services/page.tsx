@@ -3,6 +3,7 @@ import React, { useEffect, useRef, Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useProtectedAction } from '@/hooks/useProtectedAction';
 import { detailedServices } from '@/lib/servicesPricing';
+import { getPricingImage } from '@/lib/pricingImages';
 
 function ServicesContent() {
   const searchParams = useSearchParams();
@@ -10,6 +11,7 @@ function ServicesContent() {
   const { handleProtectedAction } = useProtectedAction();
   const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
   const [modalSearchQuery, setModalSearchQuery] = useState('');
+  const [enlargedImage, setEnlargedImage] = useState<{ src: string; title: string } | null>(null);
 
   const closeModal = () => {
     setSelectedCategory(null);
@@ -20,7 +22,6 @@ function ServicesContent() {
   const acRef = useRef<HTMLDivElement>(null);
   const electricianRef = useRef<HTMLDivElement>(null);
   const plumberRef = useRef<HTMLDivElement>(null);
-  const tvRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (serviceParam) {
@@ -31,8 +32,6 @@ function ServicesContent() {
         targetRef = electricianRef;
       } else if (serviceParam === 'plumber' || serviceParam === 'plumbing') {
         targetRef = plumberRef;
-      } else if (serviceParam === 'general-repairs') {
-        targetRef = tvRef;
       }
 
       if (targetRef && targetRef.current) {
@@ -49,14 +48,12 @@ function ServicesContent() {
     if (cat.id === 'ac') ref = acRef;
     if (cat.id === 'electrical') ref = electricianRef;
     if (cat.id === 'plumbing') ref = plumberRef;
-    if (cat.id === 'general-repairs') ref = tvRef;
 
     // Default descriptions if none exist
     let desc = `Professional and reliable ${cat.category.toLowerCase()} at your doorstep.`;
     if (cat.id === 'ac') desc = 'Fast diagnostics and repairs for all types of ACs.';
     if (cat.id === 'electrical') desc = 'Safe and professional electrical solutions.';
     if (cat.id === 'plumbing') desc = 'From minor leaks to major plumbing fixes.';
-    if (cat.id === 'general-repairs') desc = 'Expert TV mounting and uninstallation services.';
     
     // Extract tags from subcategories
     const tags = cat.subcategories.slice(0, 4).map(sub => sub.name);
@@ -75,15 +72,15 @@ function ServicesContent() {
   return (
     <div className="flex-grow">
       {/* Hero Header */}
-      <section className="py-24 bg-gradient-to-b from-white to-orange-50">
+      <section className="py-12 md:py-24 bg-gradient-to-b from-white to-orange-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 text-center">
           <p className="inline-block bg-brand-orange text-white px-4 py-2 rounded-full text-sm font-semibold">
             Our Services
           </p>
-          <h1 className="mt-6 text-5xl md:text-7xl font-bold text-brand-navy">
+          <h1 className="mt-4 md:mt-6 text-4xl md:text-7xl font-bold text-brand-navy">
             Professional Home Services
           </h1>
-          <p className="mt-6 max-w-2xl mx-auto text-lg text-brand-slate">
+          <p className="mt-4 md:mt-6 max-w-2xl mx-auto text-base md:text-lg text-brand-slate">
             Quick, reliable and affordable repairs at your doorstep.
           </p>
         </div>
@@ -98,7 +95,6 @@ function ServicesContent() {
               if (service.id === 'ac') icon = '❄️';
               if (service.id === 'plumbing') icon = '🚰';
               if (service.id === 'electrical') icon = '⚡';
-              if (service.id === 'general-repairs') icon = '📺';
 
               return (
                 <button
@@ -123,22 +119,22 @@ function ServicesContent() {
       </div>
 
       {/* Services List Grid */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-12">
+      <section className="py-8 md:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-6 md:space-y-12">
           {servicesData.map((service) => {
             const isHighlighted = serviceParam === service.id || (serviceParam === 'ac' && service.id === 'ac-repair');
             return (
               <div
                 key={service.id}
                 ref={service.ref}
-                className={`grid md:grid-cols-2 gap-8 items-center rounded-3xl p-6 md:p-10 transition-all duration-500 border-2 ${
+                className={`grid md:grid-cols-2 gap-4 md:gap-8 items-center rounded-2xl md:rounded-3xl p-4 md:p-10 transition-all duration-500 border-2 ${
                   isHighlighted
                     ? 'border-brand-orange shadow-[0_0_30px_rgba(255,122,0,0.15)] scale-[1.01] bg-brand-navy'
                     : 'border-transparent hover:shadow-2xl bg-brand-navy'
                 }`}
               >
                 {/* Image */}
-                <div className="relative w-full h-[250px] md:h-[350px] rounded-2xl overflow-hidden shadow-lg">
+                <div className="relative w-full h-[180px] md:h-[350px] rounded-xl md:rounded-2xl overflow-hidden shadow-lg">
                   <img
                     alt={service.title}
                     src={service.img}
@@ -162,7 +158,8 @@ function ServicesContent() {
                         key={tag}
                         role="button"
                         onClick={() => setSelectedCategory(service.rawCategory)}
-                        className="px-4 py-3 rounded-xl bg-white/10 text-sm md:text-base font-medium text-white hover:bg-brand-orange transition-all duration-300 text-left cursor-pointer"
+                        className="px-3 py-2 md:px-4 md:py-3 rounded-xl bg-white/10 text-sm font-medium text-white hover:bg-brand-orange transition-all duration-300 text-left cursor-pointer"
+                        suppressHydrationWarning
                       >
                         {tag}
                       </div>
@@ -170,20 +167,19 @@ function ServicesContent() {
                   </div>
 
                   {/* CTA Buttons */}
-                  <div className="flex items-center gap-4 mt-10 flex-wrap">
+                  <div className="flex items-center gap-3 md:gap-4 mt-5 md:mt-10 flex-wrap">
                     <div
                       role="button"
                       onClick={() => setSelectedCategory(service.rawCategory)}
-                      className="inline-flex items-center justify-center rounded-xl text-sm font-bold transition-all duration-300 bg-white/10 text-white hover:bg-brand-orange shadow-md gap-2 cursor-pointer"
-                      style={{ padding: '14px 28px' }}
+                      className="inline-flex items-center justify-center rounded-xl text-sm font-bold transition-all duration-300 bg-white/10 text-white hover:bg-brand-orange shadow-md gap-2 cursor-pointer px-4 py-2.5 md:px-7 md:py-3.5"
+                      suppressHydrationWarning
                     >
                       View Pricing
                     </div>
                     <a
                       href="tel:+919326065836"
                       onClick={(e) => handleProtectedAction(e, 'call', service.title)}
-                      className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300 gap-2 bg-transparent text-white hover:bg-white/10"
-                      style={{ padding: '14px 28px' }}
+                      className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300 gap-2 bg-transparent text-white hover:bg-white/10 px-4 py-2.5 md:px-7 md:py-3.5"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -206,8 +202,7 @@ function ServicesContent() {
                       onClick={(e) => handleProtectedAction(e, 'whatsapp', service.title)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300 bg-green-500 text-white hover:bg-green-600 hover:-translate-y-0.5 shadow-md gap-2"
-                      style={{ padding: '14px 28px' }}
+                      className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300 bg-green-500 text-white hover:bg-green-600 hover:-translate-y-0.5 shadow-md gap-2 px-4 py-2.5 md:px-7 md:py-3.5"
                     >
                       <svg
                         stroke="currentColor"
@@ -397,16 +392,39 @@ function ServicesContent() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                              {srv.variants.map((variant: any, varIdx: number) => (
-                                <tr key={varIdx} className="hover:bg-slate-50 transition-colors">
-                                  <td className="p-4 text-brand-navy font-medium text-sm md:text-base">
-                                    {variant.name}
-                                  </td>
-                                  <td className="p-4 text-brand-slate font-bold text-right">
-                                    ₹{variant.price}
-                                  </td>
-                                </tr>
-                              ))}
+                              {srv.variants.map((variant: any, varIdx: number) => {
+                                const variantImg = getPricingImage(
+                                  selectedCategory.id,
+                                  sub.name,
+                                  srv.name,
+                                  variant.name
+                                );
+                                return (
+                                  <tr key={varIdx} className="hover:bg-slate-50 transition-colors">
+                                    <td className="p-4 text-brand-navy font-medium text-sm md:text-base">
+                                      <div className="flex items-center gap-4">
+                                        {variantImg && (
+                                          <div 
+                                            onClick={() => setEnlargedImage({ src: variantImg, title: variant.name })}
+                                            className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 border border-slate-200 shadow-sm cursor-zoom-in hover:scale-105 transition-transform duration-200"
+                                            title="Click to enlarge"
+                                          >
+                                            <img
+                                              src={variantImg}
+                                              alt={variant.name}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          </div>
+                                        )}
+                                        <span>{variant.name}</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-4 text-brand-slate font-bold text-right text-sm md:text-base">
+                                      ₹{variant.price}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
@@ -426,6 +444,42 @@ function ServicesContent() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Enlarged Image Lightbox */}
+      {enlargedImage && (
+        <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 bg-brand-navy/80 backdrop-blur-md transition-all">
+          {/* Backdrop click to close */}
+          <div 
+            className="absolute inset-0 cursor-zoom-out" 
+            onClick={() => setEnlargedImage(null)}
+          ></div>
+          
+          {/* Lightbox Content */}
+          <div className="relative max-w-3xl max-h-[85vh] w-full flex flex-col items-center justify-center z-10 animate-in zoom-in-95 duration-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute -top-12 right-0 md:-right-12 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors border border-white/10 shadow-lg"
+              aria-label="Close image preview"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+
+            {/* Image */}
+            <div className="overflow-hidden rounded-3xl border-4 border-white/25 shadow-2xl bg-white max-w-full max-h-[75vh]">
+              <img
+                src={enlargedImage.src}
+                alt={enlargedImage.title}
+                className="object-contain w-auto h-auto max-w-full max-h-[75vh]"
+              />
+            </div>
+
+            {/* Caption / Title */}
+            <div className="mt-4 px-6 py-2.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white text-sm font-semibold tracking-wide shadow-md">
+              {enlargedImage.title}
             </div>
           </div>
         </div>

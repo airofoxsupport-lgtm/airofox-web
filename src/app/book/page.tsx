@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle, MapPin, Calendar, Clock, ArrowRight, ArrowLeft, PenTool, Wind, Droplets, Zap, Tv } from 'lucide-react';
+import { CheckCircle, MapPin, Calendar, Clock, ArrowRight, ArrowLeft, PenTool, Wind, Droplets, Zap } from 'lucide-react';
 import { db } from '@/lib/db';
 import { showToast } from '@/components/shared/Toast';
 
@@ -20,7 +20,6 @@ const SERVICES = detailedServices.map(cat => {
   if (cat.id === 'ac') icon = <Wind className="w-6 h-6" />;
   if (cat.id === 'plumbing') icon = <Droplets className="w-6 h-6" />;
   if (cat.id === 'electrical') icon = <Zap className="w-6 h-6" />;
-  if (cat.id === 'general-repairs') icon = <Tv className="w-6 h-6" />;
 
   return {
     id: cat.id,
