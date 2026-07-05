@@ -387,8 +387,8 @@ function ServicesContent() {
                           <table className="w-full text-left border-collapse">
                             <thead>
                               <tr className="bg-brand-navy text-white">
-                                <th className="p-4 font-semibold text-sm md:text-base w-3/4">{srv.name}</th>
-                                <th className="p-4 font-semibold text-sm md:text-base text-right">Price (₹)</th>
+                                <th className="p-3 md:p-4 font-semibold text-sm md:text-base">{srv.name}</th>
+                                <th className="p-3 md:p-4 font-semibold text-sm md:text-base text-right whitespace-nowrap w-[90px] md:w-auto">Price (₹)</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -401,12 +401,12 @@ function ServicesContent() {
                                 );
                                 return (
                                   <tr key={varIdx} className="hover:bg-slate-50 transition-colors">
-                                    <td className="p-4 text-brand-navy font-medium text-sm md:text-base">
-                                      <div className="flex items-center gap-4">
+                                    <td className="p-3 md:p-4 text-brand-navy font-medium text-sm md:text-base">
+                                      <div className="flex items-center gap-2 md:gap-4">
                                         {variantImg && (
                                           <div 
                                             onClick={() => setEnlargedImage({ src: variantImg, title: variant.name })}
-                                            className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 border border-slate-200 shadow-sm cursor-zoom-in hover:scale-105 transition-transform duration-200"
+                                            className="w-10 h-10 md:w-14 md:h-14 rounded-lg md:rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 border border-slate-200 shadow-sm cursor-zoom-in hover:scale-105 transition-transform duration-200"
                                             title="Click to enlarge"
                                           >
                                             <img
@@ -416,10 +416,10 @@ function ServicesContent() {
                                             />
                                           </div>
                                         )}
-                                        <span>{variant.name}</span>
+                                        <span className="leading-snug">{variant.name}</span>
                                       </div>
                                     </td>
-                                    <td className="p-4 text-brand-slate font-bold text-right text-sm md:text-base">
+                                    <td className="p-3 md:p-4 text-brand-slate font-bold text-right text-sm md:text-base whitespace-nowrap w-[90px] md:w-auto">
                                       ₹{variant.price}
                                     </td>
                                   </tr>
