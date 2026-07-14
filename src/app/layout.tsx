@@ -6,6 +6,8 @@ import Footer from "@/components/layout/Footer";
 import StickyMobileCTA from "@/components/shared/StickyMobileCTA";
 import ToastProvider from "@/components/shared/Toast";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/react";
+
 
 const inter = Inter({
   subsets: ["latin"],
@@ -56,6 +58,7 @@ export default function RootLayout({
         <StickyMobileCTA />
         <ToastProvider />
         <Footer />
+        <Analytics />
       </body>
     </html>
   );
